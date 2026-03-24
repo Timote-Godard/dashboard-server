@@ -31,7 +31,7 @@ app.get('/api/stats', async (c) => {
     ramData = {
       used: parseFloat((mem.used / 1024 ** 3).toFixed(2)),
       total: parseFloat((mem.total / 1024 ** 3).toFixed(2)),
-      percent: parseFloat(((mem.used / mem.total) * 100).toFixed(2))
+      percent: parseFloat(((mem.active / mem.total) * 100).toFixed(2))
     };
 
     // STOCKAGE (On cherche la partition principale "/")
