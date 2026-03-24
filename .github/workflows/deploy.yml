@@ -13,6 +13,12 @@ jobs:
       - name: 📥 Récupérer le nouveau code
         uses: actions/checkout@v4
 
+      - name: 🔐 Générer le fichier .env
+        run: |
+          echo "MEROSS_IP=${{ secrets.MEROSS_IP }}" > .env
+          echo "MEROSS_UUID=${{ secrets.MEROSS_UUID }}" >> .env
+          echo "MEROSS_KEY=${{ secrets.MEROSS_KEY }}" >> .env
+
       - name: 📦 Installer les dépendances
         run: npm install
 
