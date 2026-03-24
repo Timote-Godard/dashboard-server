@@ -1,29 +1,19 @@
-name: Déploiement Auto sur Vieux PC
-
-on:
-  push:
-    branches:
-      - main # S'exécute quand tu pousses sur la branche main
+name: Deploy Full Dashboard
+on: [push]
 
 jobs:
   deploy:
-    runs-on: self-hosted # LA MAGIE EST LÀ : ça s'exécute sur TON pc !
-
+    runs-on: self-hosted
     steps:
-      - name: 📥 Récupérer le nouveau code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: 🔐 Générer le fichier .env
+      - name: 🔐 Create .env for Backend
         run: |
           echo "MEROSS_IP=${{ secrets.MEROSS_IP }}" > .env
           echo "MEROSS_UUID=${{ secrets.MEROSS_UUID }}" >> .env
           echo "MEROSS_KEY=${{ secrets.MEROSS_KEY }}" >> .env
 
-      - name: 📦 Installer les dépendances
-        run: npm install
-
-      - name: 🚀 Redémarrer l'API avec PM2
+      - name: 🐳 Docker Compose Deploy
         run: |
-          # Si tu n'as pas encore installé PM2 sur le serveur, on s'assure qu'il utilise le bon
-          pm2 restart dashboard-api || pm2 start npm --name "dashboard-api" -- run dev
-          pm2 save
+          docker compose build
+          docker compose up -d

@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  # --- LE BACKEND ---
+  backend:
+    build: 
+      context: ./backend # Chemin vers ton dossier backend
+    container_name: dashboard-api
+    restart: always
+    ports:
+      - "8085:8085"
+    env_file: .env # Il lira tes clés Meross ici
+
+  # --- LE FRONTEND ---
+  frontend:
+    build:
+      context: ./frontend # Chemin vers ton dossier frontend
+    container_name: dashboard-ui
+    restart: always
+    ports:
+      - "8084:8084"
