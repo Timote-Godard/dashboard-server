@@ -1,0 +1,23 @@
+name: Déploiement Auto sur Vieux PC
+
+on:
+  push:
+    branches:
+      - main # S'exécute quand tu pousses sur la branche main
+
+jobs:
+  deploy:
+    runs-on: self-hosted # LA MAGIE EST LÀ : ça s'exécute sur TON pc !
+
+    steps:
+      - name: 📥 Récupérer le nouveau code
+        uses: actions/checkout@v4
+
+      - name: 📦 Installer les dépendances
+        run: npm install
+
+      - name: 🚀 Redémarrer l'API avec PM2
+        run: |
+          # Si tu n'as pas encore installé PM2 sur le serveur, on s'assure qu'il utilise le bon
+          pm2 restart dashboard-api || pm2 start npm --name "dashboard-api" -- run dev
+          pm2 save
