@@ -1,28 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Thermometer, Cpu, Zap } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { hsla } from 'framer-motion';
 
-interface DashboardData {
-  status: string;
-  cpu: {
-    temp: number;
-    load: number;
-  };
-  ram: {
-    used: number;
-    total: number;
-    percent: number;
-  };
-  storage: {
-    used: number;
-    total: number;
-    percent: number;
-  };
-  watts: number;
-  timestamp: string;
-}
-
+// Interfaces pour le typage des données
 interface ChartPointRAM {
   time: string;
   usage: number; 
@@ -39,24 +18,30 @@ interface ChartPointStorage {
   used: number;
 }
 
-function App() {
+interface ChartPointWatts {
+  time: string;
+  watts: number;
+}
 
-  const [stats, setStats] = useState<DashboardData | null>(null);
+function App() {
   const [historyCPU, setHistoryCPU] = useState<ChartPointCPU[]>([]);
   const [historyRAM, setHistoryRAM] = useState<ChartPointRAM[]>([]);
   const [historyStorage, setHistoryStorage] = useState<ChartPointStorage[]>([]);
+  const [historyWatts, setHistoryWatts] = useState<ChartPointWatts[]>([]);
 
   const fetchStats = async () => {
     try {
       const res = await fetch('https://api-dashboard.timote.ovh/api/stats');
       const data = await res.json();
-      setStats(data);
+      const time = new Date().toLocaleTimeString();
 
-      setHistoryCPU(prev => [...prev, { time: new Date().toLocaleTimeString(), temp: data.cpu.temp, load:data.cpu.load }].slice(-20))
-      setHistoryRAM(prev => [...prev, { time: new Date().toLocaleTimeString(), usage: data.ram.percent }].slice(-20))
-      setHistoryStorage(prev => [...prev, { time: new Date().toLocaleTimeString(), used: data.storage.used }].slice(-20))
+      setHistoryCPU(prev => [...prev, { time, temp: data.cpu.temp, load: data.cpu.load }].slice(-20));
+      setHistoryRAM(prev => [...prev, { time, usage: data.ram.percent }].slice(-20));
+      setHistoryStorage(prev => [...prev, { time, used: data.storage.used }].slice(-20));
+      setHistoryWatts(prev => [...prev, { time, watts: data.watts }].slice(-20)); // Récupération des Watts !
+      
     } catch (err) {
-      console.error("L'API est éteinte ?", err);
+      console.error("Erreur API :", err);
     }
   };
 
@@ -67,74 +52,79 @@ function App() {
   }, []);
 
   return (
-    <div>
-      <div style={{ width: '100%', height: 300 }}>
-        <ResponsiveContainer>
-          <AreaChart 
-            data={historyCPU}
-            margin={{
-              top: 10,
-              right: 30,
-              left: 0,
-              bottom: 0,
-            }}
-          >
-            
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="time" />
-            <YAxis />
-            <Tooltip />
-            <Area type="monotone" dataKey="temp" stroke="#8884d8" fill="#8884d8" isAnimationActive={false}/>
-            <Area type="monotone" dataKey="load" stroke="#861b1b" fill="#861b1b" isAnimationActive={false}/>
-          </AreaChart>
-        </ResponsiveContainer>
-      </div>
+    <div style={{ backgroundColor: '#111', color: '#fff', minHeight: '100vh', padding: '20px', fontFamily: 'sans-serif' }}>
+      <h1 style={{ textAlign: 'center', marginBottom: '30px' }}>Server Monitoring - timote.ovh</h1>
+      
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '20px' }}>
+        
+        {/* Graphique CPU */}
+        <div style={{ background: '#222', padding: '15px', borderRadius: '10px' }}>
+          <h3>CPU (Temp: Purple | Load: Red %)</h3>
+          <div style={{ width: '100%', height: 250 }}>
+            <ResponsiveContainer>
+              <AreaChart data={historyCPU}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#444" />
+                <XAxis dataKey="time" stroke="#888" />
+                <YAxis stroke="#888" />
+                <Tooltip contentStyle={{ backgroundColor: '#333', border: 'none' }} />
+                <Area type="monotone" dataKey="temp" stroke="#8884d8" fill="#8884d8" fillOpacity={0.3} isAnimationActive={false}/>
+                <Area type="monotone" dataKey="load" stroke="#ff4444" fill="#ff4444" fillOpacity={0.3} isAnimationActive={false}/>
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
 
-      <div style={{ width: '100%', height: 300 }}>
-        <ResponsiveContainer>
-          <AreaChart 
-            data={historyRAM}
-            margin={{
-              top: 10,
-              right: 30,
-              left: 0,
-              bottom: 0,
-            }}
-          >
-            
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="time" />
-            <YAxis />
-            <Tooltip />
-            <Area type="monotone" dataKey="usage" stroke="#8884d8" fill="#8884d8" isAnimationActive={false}/>
-          </AreaChart>
-        </ResponsiveContainer>
-      </div>
+        {/* Graphique RAM */}
+        <div style={{ background: '#222', padding: '15px', borderRadius: '10px' }}>
+          <h3>RAM (Usage %)</h3>
+          <div style={{ width: '100%', height: 250 }}>
+            <ResponsiveContainer>
+              <AreaChart data={historyRAM}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#444" />
+                <XAxis dataKey="time" stroke="#888" />
+                <YAxis stroke="#888" />
+                <Tooltip contentStyle={{ backgroundColor: '#333', border: 'none' }} />
+                <Area type="monotone" dataKey="usage" stroke="#00C49F" fill="#00C49F" fillOpacity={0.3} isAnimationActive={false}/>
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
 
-      <div style={{ width: '100%', height: 300 }}>
-        <ResponsiveContainer>
-          <AreaChart 
-            data={historyStorage}
-            margin={{
-              top: 10,
-              right: 30,
-              left: 0,
-              bottom: 0,
-            }}
-          >
-            
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="time" />
-            <YAxis />
-            <Tooltip />
-            <Area type="monotone" dataKey="used" stroke="#8884d8" fill="#8884d8" isAnimationActive={false}/>
-          </AreaChart>
-        </ResponsiveContainer>
+        {/* Graphique Stockage */}
+        <div style={{ background: '#222', padding: '15px', borderRadius: '10px' }}>
+          <h3>Stockage (Go Utilisés)</h3>
+          <div style={{ width: '100%', height: 250 }}>
+            <ResponsiveContainer>
+              <AreaChart data={historyStorage}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#444" />
+                <XAxis dataKey="time" stroke="#888" />
+                <YAxis stroke="#888" />
+                <Tooltip contentStyle={{ backgroundColor: '#333', border: 'none' }} />
+                <Area type="monotone" dataKey="used" stroke="#FFBB28" fill="#FFBB28" fillOpacity={0.3} isAnimationActive={false}/>
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Graphique Watts (Prise Meross) */}
+        <div style={{ background: '#222', padding: '15px', borderRadius: '10px' }}>
+          <h3>Consommation (Watts ⚡)</h3>
+          <div style={{ width: '100%', height: 250 }}>
+            <ResponsiveContainer>
+              <AreaChart data={historyWatts}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#444" />
+                <XAxis dataKey="time" stroke="#888" />
+                <YAxis stroke="#888" />
+                <Tooltip contentStyle={{ backgroundColor: '#333', border: 'none' }} />
+                <Area type="monotone" dataKey="watts" stroke="#0088FE" fill="#0088FE" fillOpacity={0.3} isAnimationActive={false}/>
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
       </div>
     </div>
-
-    
-  )
+  );
 }
 
-export default App
+export default App;
