@@ -52,21 +52,20 @@ function App() {
   }, []);
 
   return (
-    <div style={{ backgroundColor: '#111', color: '#fff', minHeight: '100vh', padding: '20px', fontFamily: 'sans-serif' }}>
-      <h1 style={{ textAlign: 'center', marginBottom: '30px' }}>Server Monitoring - timote.ovh</h1>
+    <div className='h-screen w-screen'>
       
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '20px' }}>
+      <div>
         
         {/* Graphique CPU */}
-        <div style={{ background: '#222', padding: '15px', borderRadius: '10px' }}>
+        <div>
           <h3>CPU (Temp: Purple | Load: Red %)</h3>
-          <div style={{ width: '100%', height: 250 }}>
+          <div className='w-full h-60'>
             <ResponsiveContainer>
               <AreaChart data={historyCPU}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#444" />
                 <XAxis dataKey="time" stroke="#888" />
                 <YAxis stroke="#888" />
-                <Tooltip contentStyle={{ backgroundColor: '#333', border: 'none' }} />
+                <Tooltip  />
                 <Area type="monotone" dataKey="temp" stroke="#8884d8" fill="#8884d8" fillOpacity={0.3} isAnimationActive={false}/>
                 <Area type="monotone" dataKey="load" stroke="#ff4444" fill="#ff4444" fillOpacity={0.3} isAnimationActive={false}/>
               </AreaChart>
@@ -75,15 +74,15 @@ function App() {
         </div>
 
         {/* Graphique RAM */}
-        <div style={{ background: '#222', padding: '15px', borderRadius: '10px' }}>
+        <div>
           <h3>RAM (Usage %)</h3>
-          <div style={{ width: '100%', height: 250 }}>
+          <div className='w-full h-60'>
             <ResponsiveContainer>
               <AreaChart data={historyRAM}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#444" />
                 <XAxis dataKey="time" stroke="#888" />
                 <YAxis stroke="#888" />
-                <Tooltip contentStyle={{ backgroundColor: '#333', border: 'none' }} />
+                <Tooltip  />
                 <Area type="monotone" dataKey="usage" stroke="#00C49F" fill="#00C49F" fillOpacity={0.3} isAnimationActive={false}/>
               </AreaChart>
             </ResponsiveContainer>
@@ -91,15 +90,15 @@ function App() {
         </div>
 
         {/* Graphique Stockage */}
-        <div style={{ background: '#222', padding: '15px', borderRadius: '10px' }}>
+        <div>
           <h3>Stockage (Go Utilisés)</h3>
-          <div style={{ width: '100%', height: 250 }}>
+          <div className='w-full h-60'>
             <ResponsiveContainer>
               <AreaChart data={historyStorage}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#444" />
                 <XAxis dataKey="time" stroke="#888" />
                 <YAxis stroke="#888" />
-                <Tooltip contentStyle={{ backgroundColor: '#333', border: 'none' }} />
+                <Tooltip  />
                 <Area type="monotone" dataKey="used" stroke="#FFBB28" fill="#FFBB28" fillOpacity={0.3} isAnimationActive={false}/>
               </AreaChart>
             </ResponsiveContainer>
@@ -107,15 +106,15 @@ function App() {
         </div>
 
         {/* Graphique Watts (Prise Meross) */}
-        <div style={{ background: '#222', padding: '15px', borderRadius: '10px' }}>
+        <div>
           <h3>Consommation (Watts ⚡)</h3>
-          <div style={{ width: '100%', height: 250 }}>
+          <div  className='w-full h-60'>
             <ResponsiveContainer>
               <AreaChart data={historyWatts}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#444" />
                 <XAxis dataKey="time" stroke="#888" />
                 <YAxis stroke="#888" />
-                <Tooltip contentStyle={{ backgroundColor: '#333', border: 'none' }} />
+                <Tooltip />
                 <Area type="monotone" dataKey="watts" stroke="#0088FE" fill="#0088FE" fillOpacity={0.3} isAnimationActive={false}/>
               </AreaChart>
             </ResponsiveContainer>
