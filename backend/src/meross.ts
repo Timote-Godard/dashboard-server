@@ -1,12 +1,11 @@
 import crypto from 'crypto';
-import 'dotenv/config';
 
 export class MerossService {
   // Ces infos sont à récupérer via l'app Meross quand tu seras chez toi
   private config = {
-    ip: process.env.MEROSS_IP || '',
-    uuid: process.env.MEROSS_UUID || '',
-    key: process.env.MEROSS_KEY || '',
+    ip: '192.168.1.102', // <-- Remplace par la vraie IP de la prise
+    uuid: '***REMOVED***', // L'UUID de "Serveur"
+    key: '***REMOVED***', // Ta clé globale
   };
 
   private isLinux = process.platform === 'linux';
