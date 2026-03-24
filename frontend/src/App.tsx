@@ -14,6 +14,12 @@ interface DashboardData {
     total: number;
     percent: number;
   };
+  storage: {
+    used: number;
+    total: number;
+    percent: number;
+  };
+  watts: number;
   timestamp: string;
 }
 
@@ -28,20 +34,27 @@ interface ChartPointCPU {
   load: number;
 }
 
+interface ChartPointStorage {
+  time: string;
+  used: number;
+}
+
 function App() {
 
   const [stats, setStats] = useState<DashboardData | null>(null);
   const [historyCPU, setHistoryCPU] = useState<ChartPointCPU[]>([]);
   const [historyRAM, setHistoryRAM] = useState<ChartPointRAM[]>([]);
+  const [historyStorage, setHistoryStorage] = useState<ChartPointStorage[]>([]);
 
   const fetchStats = async () => {
     try {
-      const res = await fetch('http://localhost:8085/api/stats');
+      const res = await fetch('https://api-dashboard.timote.ovh/api/stats');
       const data = await res.json();
       setStats(data);
 
       setHistoryCPU(prev => [...prev, { time: new Date().toLocaleTimeString(), temp: data.cpu.temp, load:data.cpu.load }].slice(-20))
       setHistoryRAM(prev => [...prev, { time: new Date().toLocaleTimeString(), usage: data.ram.percent }].slice(-20))
+      setHistoryStorage(prev => [...prev, { time: new Date().toLocaleTimeString(), used: data.storage.used }].slice(-20))
     } catch (err) {
       console.error("L'API est éteinte ?", err);
     }
@@ -76,6 +89,7 @@ function App() {
           </AreaChart>
         </ResponsiveContainer>
       </div>
+
       <div style={{ width: '100%', height: 300 }}>
         <ResponsiveContainer>
           <AreaChart 
@@ -89,10 +103,31 @@ function App() {
           >
             
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="usage" />
+            <XAxis dataKey="time" />
             <YAxis />
             <Tooltip />
-            <Area type="monotone" dataKey="temp" stroke="#8884d8" fill="#8884d8" isAnimationActive={false}/>
+            <Area type="monotone" dataKey="usage" stroke="#8884d8" fill="#8884d8" isAnimationActive={false}/>
+          </AreaChart>
+        </ResponsiveContainer>
+      </div>
+
+      <div style={{ width: '100%', height: 300 }}>
+        <ResponsiveContainer>
+          <AreaChart 
+            data={historyStorage}
+            margin={{
+              top: 10,
+              right: 30,
+              left: 0,
+              bottom: 0,
+            }}
+          >
+            
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="time" />
+            <YAxis />
+            <Tooltip />
+            <Area type="monotone" dataKey="used" stroke="#8884d8" fill="#8884d8" isAnimationActive={false}/>
           </AreaChart>
         </ResponsiveContainer>
       </div>
