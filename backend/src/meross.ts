@@ -1,11 +1,11 @@
 import crypto from 'crypto';
 
 export class MerossService {
-  // Ces infos sont à récupérer via l'app Meross quand tu seras chez toi
+  
   private config = {
-    ip: '192.168.1.102', // <-- Remplace par la vraie IP de la prise
-    uuid: '***REMOVED***', // L'UUID de "Serveur"
-    key: '***REMOVED***', // Ta clé globale
+    ip: process.env.PRISE_IP,
+    uuid: process.env.PRISE_UUID,
+    key: process.env.PRISE_KEY,
   };
 
   private isLinux = process.platform === 'linux';
