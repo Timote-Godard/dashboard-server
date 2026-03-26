@@ -2,11 +2,13 @@ import crypto from 'crypto';
 
 export class MerossService {
 
-  private config = {
-    ip: process.env.MEROSS_IP,
-    uuid: process.env.MEROSS_UUID,
-    key: process.env.MEROSS_KEY,
-  };
+  private get config() {
+    return {
+      ip: process.env.MEROSS_IP,
+      uuid: process.env.MEROSS_UUID,
+      key: process.env.MEROSS_KEY,
+    };
+  }
 
   private isLinux = process.platform === 'linux';
 
