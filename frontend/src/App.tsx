@@ -4,7 +4,7 @@ import StatChart from "./components/StatChart";
 // Interfaces pour le typage des données
 interface ChartPointRAM {
   time: string;
-  used: number; 
+  ramUsed: number; 
 }
 
 interface ChartPointCPU {
@@ -15,7 +15,7 @@ interface ChartPointCPU {
 
 interface ChartPointStorage {
   time: string;
-  used: number;
+  storageUsed: number;
 }
 
 interface ChartPointWatts {
@@ -38,10 +38,10 @@ function App() {
       const data = await res.json();
       const time = new Date().toLocaleTimeString();
 
-      setHistoryCPU(prev => [...prev, { time, temp: data.cpu.temp, load: data.cpu.load }].slice(-20));
-      setHistoryRAM(prev => [...prev, { time, used: data.ram.used }].slice(-20));
-      setHistoryStorage(prev => [...prev, { time, used: data.storage.used }].slice(-20));
-      setHistoryWatts(prev => [...prev, { time, watts: data.watts }].slice(-20)); // Récupération des Watts !
+      setHistoryCPU(prev => [...prev, { time, temp: data.cpu.temp, load: data.cpu.load }].slice(-61));
+      setHistoryRAM(prev => [...prev, { time, ramUsed: data.ram.used }].slice(-61));
+      setHistoryStorage(prev => [...prev, { time, storageUsed: data.storage.used }].slice(-61));
+      setHistoryWatts(prev => [...prev, { time, watts: data.watts }].slice(-61)); // Récupération des Watts !
       
     } catch (err) {
       console.error("Erreur API :", err);
@@ -52,7 +52,7 @@ function App() {
   const fetchHistory = async () => {
     try {
       // ⚠️ N'oublie pas de mettre l'URL / IP de ton serveur !
-      const res = await fetch('http://api-dashboard.timote.ovh/api/history');
+      const res = await fetch('https://api-dashboard.timote.ovh/api/history');
       if (!res.ok) return;
       
       const data = await res.json();
@@ -77,12 +77,12 @@ function App() {
 
       const formattedRAM = data.map((d: any) => ({ 
         time: formatTimestamp(d.timestamp), 
-        used: d.ram_used
+        ramUsed: d.ram_used
       }));
 
       const formattedStorage = data.map((d: any) => ({ 
         time: formatTimestamp(d.timestamp), 
-        used: d.storage_used 
+        storageUsed: d.storage_used 
       }));
 
       const formattedWatts = data.map((d: any) => ({ 
@@ -126,14 +126,14 @@ function App() {
           title="RAM Used" 
           data={historyRAM}
           yDomain={[0, 16]} 
-          metrics={[{ key: 'used', color: '#00C49F', label: 'Utilisation (%)' }]} 
+          metrics={[{ key: 'ramUsed', color: '#00C49F', label: 'Utilisation (%)' }]} 
         />
 
         <StatChart 
           title="Stockage" 
           data={historyStorage}
           yDomain={[0, 100]} 
-          metrics={[{ key: 'used', color: '#FFBB28', label: 'Go Utilisés' }]} 
+          metrics={[{ key: 'storageUsed', color: '#FFBB28', label: 'Go Utilisés' }]} 
         />
 
         <StatChart 
