@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import StatChart from "./components/StatChart";
 
 // Interfaces pour le typage des données
@@ -49,11 +48,11 @@ function App() {
     }
   };
 
-  // useEffect(() => {
-  //   fetchStats();
-  //   const interval = setInterval(fetchStats, 3000); 
-  //   return () => clearInterval(interval);
-  // }, []);
+  useEffect(() => {
+    fetchStats();
+    const interval = setInterval(fetchStats, 3000); 
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div className='min-h-screen w-screen p-8'>
