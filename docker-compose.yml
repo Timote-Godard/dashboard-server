@@ -10,7 +10,7 @@ services:
       - "8085:8085"
     env_file: .env # Il lira tes clés Meross ici
     volumes:
-      - ./db-data:/app/data
+      - dashboard_db:/app/data
 
   # --- LE FRONTEND ---
   frontend:
@@ -20,3 +20,7 @@ services:
     restart: always
     ports:
       - "8084:8084"
+
+
+volumes:
+  dashboard_db:
