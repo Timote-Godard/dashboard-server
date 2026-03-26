@@ -4,7 +4,7 @@ import StatChart from "./components/StatChart";
 // Interfaces pour le typage des données
 interface ChartPointRAM {
   time: string;
-  usage: number; 
+  used: number; 
 }
 
 interface ChartPointCPU {
@@ -29,7 +29,7 @@ function App() {
   const [historyStorage, setHistoryStorage] = useState<ChartPointStorage[]>([]);
   const [historyWatts, setHistoryWatts] = useState<ChartPointWatts[]>([]);
 
-  const fetchStats = async () => {
+  const fetchLiveStats = async () => {
     try {
       const res = await fetch('https://api-dashboard.timote.ovh/api/stats');
       if (!res) {
@@ -39,7 +39,7 @@ function App() {
       const time = new Date().toLocaleTimeString();
 
       setHistoryCPU(prev => [...prev, { time, temp: data.cpu.temp, load: data.cpu.load }].slice(-20));
-      setHistoryRAM(prev => [...prev, { time, usage: data.ram.percent }].slice(-20));
+      setHistoryRAM(prev => [...prev, { time, used: data.ram.used }].slice(-20));
       setHistoryStorage(prev => [...prev, { time, used: data.storage.used }].slice(-20));
       setHistoryWatts(prev => [...prev, { time, watts: data.watts }].slice(-20)); // Récupération des Watts !
       
@@ -48,9 +48,61 @@ function App() {
     }
   };
 
+
+  const fetchHistory = async () => {
+    try {
+      // ⚠️ N'oublie pas de mettre l'URL / IP de ton serveur !
+      const res = await fetch('http://api-dashboard.timote.ovh/api/history');
+      if (!res.ok) return;
+      
+      const data = await res.json();
+
+      
+      
+      // On transforme les données brutes de la base de données (SQLite) au format attendu par tes graphiques (Recharts)
+      const formatTimestamp = (timestamp: string) => {
+        const utcDate = new Date(timestamp.includes('Z') ? timestamp : timestamp + 'Z');
+        return utcDate.toLocaleTimeString('fr-FR', { 
+          hour: '2-digit', 
+          minute: '2-digit' 
+        });
+      };
+
+      // 2. On applique la logique à tous tes jeux de données
+      const formattedCPU = data.map((d: any) => ({ 
+        time: formatTimestamp(d.timestamp),
+        temp: d.cpu_temp, 
+        load: d.cpu_load 
+      }));
+
+      const formattedRAM = data.map((d: any) => ({ 
+        time: formatTimestamp(d.timestamp), 
+        used: d.ram_used
+      }));
+
+      const formattedStorage = data.map((d: any) => ({ 
+        time: formatTimestamp(d.timestamp), 
+        used: d.storage_used 
+      }));
+
+      const formattedWatts = data.map((d: any) => ({ 
+        time: formatTimestamp(d.timestamp), 
+        watts: d.watts 
+      }));
+
+      // On injecte d'un coup l'historique dans les graphiques
+      setHistoryCPU(formattedCPU);
+      setHistoryRAM(formattedRAM);
+      setHistoryStorage(formattedStorage);
+      setHistoryWatts(formattedWatts);
+    } catch (err) {
+      console.error("Erreur lors du chargement de l'historique :", err);
+    }
+  };
+
   useEffect(() => {
-    fetchStats();
-    const interval = setInterval(fetchStats, 3000); 
+    fetchHistory();
+    const interval = setInterval(fetchLiveStats, 3000); 
     return () => clearInterval(interval);
   }, []);
 
@@ -71,10 +123,10 @@ function App() {
         />
 
         <StatChart 
-          title="RAM Usage" 
+          title="RAM Used" 
           data={historyRAM}
-          yDomain={[0, 100]} 
-          metrics={[{ key: 'usage', color: '#00C49F', label: 'Utilisation (%)' }]} 
+          yDomain={[0, 16]} 
+          metrics={[{ key: 'used', color: '#00C49F', label: 'Utilisation (%)' }]} 
         />
 
         <StatChart 

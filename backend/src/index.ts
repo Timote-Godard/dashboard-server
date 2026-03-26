@@ -114,8 +114,8 @@ setInterval(async () => {
       const [temp, load, mem, fs] = await Promise.all([si.cpuTemperature(), si.currentLoad(), si.mem(), si.fsSize()]);
       cpuTemp = temp.main || 0;
       cpuLoad = load.currentLoad;
-      ramUsed = mem.active;
-      ramTotal = mem.total;
+      ramUsed = (mem.used / 1024 ** 3);
+      ramTotal = (mem.total / 1024 ** 3);
       const mainDrive = fs.find(drive => drive.mount === '/') || fs[0];
       if (mainDrive) {
         storageUsed = mainDrive.used / 1024 ** 3;
