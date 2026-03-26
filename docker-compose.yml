@@ -9,6 +9,8 @@ services:
     ports:
       - "8085:8085"
     env_file: .env # Il lira tes clés Meross ici
+    volumes:
+      - ./db-data:/app/data
 
   # --- LE FRONTEND ---
   frontend:

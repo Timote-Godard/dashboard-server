@@ -3,10 +3,28 @@ import { serve } from '@hono/node-server'
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import si from 'systeminformation'
+import Database from 'better-sqlite3'
 import { MerossService } from './meross.js'
 
 const app = new Hono()
 const meross = new MerossService()
+
+const db = new Database('data/history.db');
+db.pragma('journal_mode = WAL'); // Optimisation pour SQLite
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS stats (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+    cpu_temp REAL,
+    cpu_load REAL,
+    ram_used REAL,
+    ram_total REAL,
+    storage_used REAL, 
+    storage_total REAL,
+    watts REAL
+  )
+`);
 
 app.use('/api/*', cors())
 
@@ -74,6 +92,50 @@ app.get('/api/stats', async (c) => {
     timestamp: new Date().toISOString()
   })
 })
+
+app.get('/api/history', (c) => {
+  try {
+    // Récupère les 60 dernières minutes (ou plus si tu veux), triées chronologiquement
+    const stmt = db.prepare('SELECT * FROM stats ORDER BY timestamp DESC LIMIT 60');
+    const history = stmt.all().reverse(); 
+    return c.json(history);
+  } catch (err) {
+    console.error("Erreur lecture BDD:", err);
+    return c.json({ error: "Impossible de lire l'historique" }, 500);
+  }
+});
+
+setInterval(async () => {
+  try {
+    const isLinux = process.platform === 'linux';
+    let cpuTemp = 0, cpuLoad = 0, ramPercent = 0, storageUsed = 0;
+
+    if (isLinux) {
+      const [temp, load, mem, fs] = await Promise.all([si.cpuTemperature(), si.currentLoad(), si.mem(), si.fsSize()]);
+      cpuTemp = temp.main || 0;
+      cpuLoad = load.currentLoad;
+      ramPercent = (mem.active / mem.total) * 100;
+      const mainDrive = fs.find(drive => drive.mount === '/') || fs[0];
+      if (mainDrive) storageUsed = mainDrive.used / 1024 ** 3;
+    } else {
+      // Fausses données pour tes tests sur Windows
+      cpuTemp = Math.random() * (55 - 40) + 40;
+      cpuLoad = Math.random() * 30;
+      ramPercent = 42.5;
+      storageUsed = 45;
+    }
+
+    const watts = await meross.getPowerUsage();
+
+    // Insertion sécurisée dans SQLite
+    const insert = db.prepare('INSERT INTO stats (cpu_temp, cpu_load, ram_percent, storage_used, watts) VALUES (?, ?, ?, ?, ?)');
+    insert.run(cpuTemp, cpuLoad, ramPercent, storageUsed, watts);
+    
+    console.log('💾 Historique sauvegardé !');
+  } catch (err) {
+    console.error('Erreur lors de la sauvegarde SQLite:', err);
+  }
+}, 60000);
 
 const port = 8085
 console.log(`Serveur dashboard lancé sur http://localhost:${port}`)
