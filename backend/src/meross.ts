@@ -3,9 +3,9 @@ import crypto from 'crypto';
 export class MerossService {
 
   private config = {
-    ip: process.env.PRISE_IP,
-    uuid: process.env.PRISE_UUID,
-    key: process.env.PRISE_KEY,
+    ip: process.env.MEROSS_IP,
+    uuid: process.env.MEROSS_UUID,
+    key: process.env.MEROSS_KEY,
   };
 
   private isLinux = process.platform === 'linux';
