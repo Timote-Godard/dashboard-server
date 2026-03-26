@@ -18,6 +18,8 @@ export class MerossService {
 
   async getPowerUsage(): Promise<number> {
 
+    console.log("Config utilisée :", this.config);
+
     // SI ON EST EN LOCAL
     if (!this.isLinux) { 
       return parseFloat((Math.random() * (40 - 35) + 35).toFixed(2));
