@@ -128,7 +128,7 @@ setInterval(async () => {
     const watts = await meross.getPowerUsage();
 
     // Insertion sécurisée dans SQLite
-    const insert = db.prepare('INSERT INTO stats (cpu_temp, cpu_load, ram_percent, storage_used, watts) VALUES (?, ?, ?, ?, ?)');
+    const insert = db.prepare('INSERT INTO stats (cpu_temp, cpu_load, ram_used, ram_total, storage_used, storage_total, watts) VALUES (?, ?, ?, ?, ?, ?, ?)');
     insert.run(cpuTemp, cpuLoad, ramPercent, storageUsed, watts);
     
     console.log('💾 Historique sauvegardé !');
