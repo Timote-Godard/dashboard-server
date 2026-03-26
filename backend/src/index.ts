@@ -108,20 +108,25 @@ app.get('/api/history', (c) => {
 setInterval(async () => {
   try {
     const isLinux = process.platform === 'linux';
-    let cpuTemp = 0, cpuLoad = 0, ramPercent = 0, storageUsed = 0;
+    let cpuTemp = 0, cpuLoad = 0, ramUsed = 0, ramTotal = 0, storageUsed = 0, storageTotal = 0;
 
     if (isLinux) {
       const [temp, load, mem, fs] = await Promise.all([si.cpuTemperature(), si.currentLoad(), si.mem(), si.fsSize()]);
       cpuTemp = temp.main || 0;
       cpuLoad = load.currentLoad;
-      ramPercent = (mem.active / mem.total) * 100;
+      ramUsed = mem.active;
+      ramTotal = mem.total;
       const mainDrive = fs.find(drive => drive.mount === '/') || fs[0];
-      if (mainDrive) storageUsed = mainDrive.used / 1024 ** 3;
+      if (mainDrive) {
+        storageUsed = mainDrive.used / 1024 ** 3;
+        storageTotal = mainDrive.size / 1024 ** 3;
+      }
     } else {
       // Fausses données pour tes tests sur Windows
       cpuTemp = Math.random() * (55 - 40) + 40;
       cpuLoad = Math.random() * 30;
-      ramPercent = 42.5;
+      ramUsed = 4;
+      ramTotal = 64;
       storageUsed = 45;
     }
 
@@ -129,7 +134,7 @@ setInterval(async () => {
 
     // Insertion sécurisée dans SQLite
     const insert = db.prepare('INSERT INTO stats (cpu_temp, cpu_load, ram_used, ram_total, storage_used, storage_total, watts) VALUES (?, ?, ?, ?, ?, ?, ?)');
-    insert.run(cpuTemp, cpuLoad, ramPercent, storageUsed, watts);
+    insert.run(cpuTemp, cpuLoad, ramUsed, ramTotal, storageUsed, storageTotal, watts);
     
     console.log('💾 Historique sauvegardé !');
   } catch (err) {
