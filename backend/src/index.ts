@@ -3,6 +3,7 @@ import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import si from 'systeminformation'
 import { MerossService } from './meross.js'
+import 'dotenv/config'
 
 const app = new Hono()
 const meross = new MerossService()

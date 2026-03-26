@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import StatChart from "./components/StatChart";
 
 // Interfaces pour le typage des données
 interface ChartPointRAM {
@@ -32,6 +33,9 @@ function App() {
   const fetchStats = async () => {
     try {
       const res = await fetch('https://api-dashboard.timote.ovh/api/stats');
+      if (!res) {
+        console.log('pas bon');
+      }
       const data = await res.json();
       const time = new Date().toLocaleTimeString();
 
@@ -45,81 +49,48 @@ function App() {
     }
   };
 
-  useEffect(() => {
-    fetchStats();
-    const interval = setInterval(fetchStats, 3000); 
-    return () => clearInterval(interval);
-  }, []);
+  // useEffect(() => {
+  //   fetchStats();
+  //   const interval = setInterval(fetchStats, 3000); 
+  //   return () => clearInterval(interval);
+  // }, []);
 
   return (
-    <div className='h-screen w-screen'>
+    <div className='min-h-screen w-screen p-8'>
+      <h1 className="text-2xl font-bold mb-8">Dashboard Serveur</h1>
       
-      <div>
+      <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
         
-        {/* Graphique CPU */}
-        <div>
-          <h3>CPU (Temp: Purple | Load: Red %)</h3>
-          <div className='w-full h-60'>
-            <ResponsiveContainer>
-              <AreaChart data={historyCPU}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#444" />
-                <XAxis dataKey="time" stroke="#888" />
-                <YAxis stroke="#888" />
-                <Tooltip  />
-                <Area type="monotone" dataKey="temp" stroke="#8884d8" fill="#8884d8" fillOpacity={0.3} isAnimationActive={false}/>
-                <Area type="monotone" dataKey="load" stroke="#ff4444" fill="#ff4444" fillOpacity={0.3} isAnimationActive={false}/>
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
+        <StatChart 
+          title="CPU Performance" 
+          data={historyCPU}
+          yDomain={[0, 100]} 
+          metrics={[
+            { key: 'temp', color: '#8884d8', label: 'Température (°C)' },
+            { key: 'load', color: '#ff4444', label: 'Charge (%)' }
+          ]} 
+        />
 
-        {/* Graphique RAM */}
-        <div>
-          <h3>RAM (Usage %)</h3>
-          <div className='w-full h-60'>
-            <ResponsiveContainer>
-              <AreaChart data={historyRAM}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#444" />
-                <XAxis dataKey="time" stroke="#888" />
-                <YAxis stroke="#888" />
-                <Tooltip  />
-                <Area type="monotone" dataKey="usage" stroke="#00C49F" fill="#00C49F" fillOpacity={0.3} isAnimationActive={false}/>
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
+        <StatChart 
+          title="RAM Usage" 
+          data={historyRAM}
+          yDomain={[0, 100]} 
+          metrics={[{ key: 'usage', color: '#00C49F', label: 'Utilisation (%)' }]} 
+        />
 
-        {/* Graphique Stockage */}
-        <div>
-          <h3>Stockage (Go Utilisés)</h3>
-          <div className='w-full h-60'>
-            <ResponsiveContainer>
-              <AreaChart data={historyStorage}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#444" />
-                <XAxis dataKey="time" stroke="#888" />
-                <YAxis stroke="#888" />
-                <Tooltip  />
-                <Area type="monotone" dataKey="used" stroke="#FFBB28" fill="#FFBB28" fillOpacity={0.3} isAnimationActive={false}/>
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
+        <StatChart 
+          title="Stockage" 
+          data={historyStorage}
+          yDomain={[0, 100]} 
+          metrics={[{ key: 'used', color: '#FFBB28', label: 'Go Utilisés' }]} 
+        />
 
-        {/* Graphique Watts (Prise Meross) */}
-        <div>
-          <h3>Consommation (Watts ⚡)</h3>
-          <div  className='w-full h-60'>
-            <ResponsiveContainer>
-              <AreaChart data={historyWatts}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#444" />
-                <XAxis dataKey="time" stroke="#888" />
-                <YAxis stroke="#888" />
-                <Tooltip />
-                <Area type="monotone" dataKey="watts" stroke="#0088FE" fill="#0088FE" fillOpacity={0.3} isAnimationActive={false}/>
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
+        <StatChart 
+          title="Consommation Électrique" 
+          data={historyWatts}
+          yDomain={[0, 'auto']}
+          metrics={[{ key: 'watts', color: '#0088FE', label: 'Watts (⚡)' }]} 
+        />
 
       </div>
     </div>

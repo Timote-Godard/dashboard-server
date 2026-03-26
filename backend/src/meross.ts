@@ -1,7 +1,7 @@
 import crypto from 'crypto';
 
 export class MerossService {
-  
+
   private config = {
     ip: process.env.PRISE_IP,
     uuid: process.env.PRISE_UUID,
@@ -17,11 +17,13 @@ export class MerossService {
   }
 
   async getPowerUsage(): Promise<number> {
-    if (!this.isLinux) {
-      // MODE MOCK : On simule pour ton portable
+
+    // SI ON EST EN LOCAL
+    if (!this.isLinux) { 
       return parseFloat((Math.random() * (40 - 35) + 35).toFixed(2));
     }
 
+    // SI ON EST SUR LE VRAI SERVEUR
     const timestamp = Math.floor(Date.now() / 1000);
     const messageId = crypto.randomBytes(16).toString('hex');
     const sign = this.generateSignature(messageId, timestamp);
@@ -31,7 +33,7 @@ export class MerossService {
         from: `http://${this.config.ip}/config`,
         messageId: messageId,
         method: 'GET',
-        namespace: 'Appliance.Control.Electricity', // Le namespace pour la conso
+        namespace: 'Appliance.Control.Electricity',
         payloadVersion: 1,
         sign: sign,
         timestamp: timestamp,
@@ -44,7 +46,7 @@ export class MerossService {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
-        signal: AbortSignal.timeout(3000), // Timeout de 3s si la prise est débranchée
+        signal: AbortSignal.timeout(3000), 
       });
 
       const data = await response.json();
