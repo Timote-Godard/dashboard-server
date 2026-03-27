@@ -5,9 +5,6 @@ import { cors } from 'hono/cors'
 import si from 'systeminformation'
 import Database from 'better-sqlite3'
 import { MerossService } from './meross.js'
-import Docker from 'dockerode';
-
-const docker = new Docker({ socketPath: '/var/run/docker.sock' });
 
 const app = new Hono()
 const meross = new MerossService()
@@ -28,6 +25,33 @@ db.exec(`
     watts REAL
   )
 `);
+
+const MES_PROJETS = [
+  { 
+    id: 'chambre',
+    nom: 'Chambre 3D', 
+    url: 'https://chambre.timote.ovh',
+    githubRepo: 'chambre-3d' // Pour l'état du déploiement
+  },
+  { 
+    id: 'ent',
+    nom: 'Mon ENT', 
+    url: 'https://ent.timote.ovh',
+    githubRepo: 'ent-frontend'
+  },
+  { 
+    id: 'nextcloud',
+    nom: 'Nextcloud', 
+    url: 'https://cloud.timote.ovh',
+    githubRepo: null // Pas de repo GitHub, c'est juste une image Docker !
+  },
+  { 
+    id: 'notes',
+    nom: 'Mes Notes', 
+    url: 'https://notes.timote.ovh',
+    githubRepo: null // Pas de repo GitHub, c'est juste une image Docker !
+  }
+];
 
 app.use('/api/*', cors())
 
@@ -145,26 +169,80 @@ setInterval(async () => {
   }
 }, 60000);
 
+let githubState: Record<string, any> = {
+  'chambre-3d': { status: 'idle', conclusion: null, message: 'Aucun déploiement récent' },
+  // Tu pourras ajouter 'ent-frontend' ici plus tard
+};
+
+// 2. La "boîte aux lettres" secrète pour GitHub (Webhook)
+app.post('/api/github-webhook', async (c) => {
+  try {
+    const data = await c.req.json();
+
+    // On vérifie que c'est bien une notification de "Workflow" (déploiement)
+    if (data.workflow_run) {
+      const repoName = data.repository.name; // ex: "chambre-3d"
+      const run = data.workflow_run;
+
+      // On met à jour notre mémoire INSTANTANÉMENT
+      githubState[repoName] = {
+        status: run.status,           // "queued", "in_progress", ou "completed"
+        conclusion: run.conclusion,   // "success", "failure", ou null
+        message: run.display_title    // Le nom de ton commit (ex: "Fix bug CSS")
+      };
+      
+      console.log(`🚀 Webhook reçu pour ${repoName}: ${run.status}`);
+    }
+    
+    // On répond 200 OK pour que GitHub sache qu'on a bien reçu le message
+    return c.text('OK');
+  } catch (error) {
+    console.error("Erreur Webhook:", error);
+    return c.text('Erreur', 500);
+  }
+});
+
+// 3. La route toute légère pour ton React
+app.get('/api/github-status', (c) => {
+  return c.json(githubState);
+});
+
 app.get('/api/services', async (c) => {
   try {
-    const containers = await docker.listContainers({ all: true });
+    // On lance toutes les requêtes en même temps pour que ça aille très vite
+    const checkPromises = MES_PROJETS.map(async (projet) => {
+      let status = 'offline';
+      
+      try {
+        // On tente de joindre l'URL avec un timeout de 5 secondes maximum
+        const res = await fetch(projet.url, {
+          method: 'HEAD', // 'HEAD' télécharge juste l'entête, pas toute la page HTML (c'est plus rapide)
+          signal: AbortSignal.timeout(5000) 
+        });
+        
+        // Si le site répond un code 200 (OK), on le passe en ligne
+        if (res.ok) {
+          status = 'online';
+        }
+      } catch (error) {
+        // Si ça plante (timeout, pas de réseau), ça restera 'offline'
+        status = 'offline';
+      }
 
-    // 1. On filtre : on ne garde QUE les conteneurs qui ont notre étiquette secrète
-    const dashboardContainers = containers.filter(c => 
-      c.Labels && c.Labels['dashboard.name']
-    );
+      return {
+        name: projet.nom,
+        url: projet.url,
+        status: status
+      };
+    });
 
-    // 2. On formate proprement avec les vraies infos
-    const services = dashboardContainers.map(container => ({
-      name: container.Labels['dashboard.name'], // Ex: "Nextcloud"
-      url: container.Labels['dashboard.url'],   // Ex: "https://cloud.timote.ovh"
-      status: container.State === 'running' ? 'online' : 'offline'
-    }));
-
-    return c.json(services);
+    // On attend que tous les sites aient répondu
+    const servicesStatus = await Promise.all(checkPromises);
+    
+    return c.json(servicesStatus);
 
   } catch (error) {
-    console.error("Erreur Docker:", error);
+    console.error("Erreur lors de la vérification des services:", error);
     return c.json({ error: "Impossible de lire les services" }, 500);
   }
 });

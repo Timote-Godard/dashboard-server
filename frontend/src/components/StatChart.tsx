@@ -54,7 +54,7 @@ const StatChart = ({ title, data, metrics, yDomain = [0, 'auto'] }: StatChartPro
             />
 
             <Tooltip 
-              contentStyle={{ backgroundColor: '#000', border: '1px solid #333', borderRadius: '8px' }}
+              contentStyle={{border: '1px solid #333', borderRadius: '8px' }}
               itemStyle={{ fontSize: '12px' }}
             />
 

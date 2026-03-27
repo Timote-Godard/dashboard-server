@@ -1,22 +1,20 @@
 
 services:
-  # --- LE BACKEND ---
   backend:
     build: 
-      context: ./backend # Chemin vers ton dossier backend
+      context: ./backend 
     container_name: dashboard-api
     restart: always
     ports:
       - "8085:8085"
-    env_file: .env # Il lira tes clés Meross ici
+    env_file: .env 
     volumes:
       - dashboard_db:/app/data
-      - /var/run/docker.sock:/var/run/docker.sock
 
-  # --- LE FRONTEND ---
+
   frontend:
     build:
-      context: ./frontend # Chemin vers ton dossier frontend
+      context: ./frontend 
     container_name: dashboard-ui
     restart: always
     ports:
