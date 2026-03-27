@@ -11,6 +11,7 @@ services:
     env_file: .env # Il lira tes clés Meross ici
     volumes:
       - dashboard_db:/app/data
+      - /var/run/docker.sock:/var/run/docker.sock
 
   # --- LE FRONTEND ---
   frontend:

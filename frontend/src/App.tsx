@@ -23,11 +23,18 @@ interface ChartPointWatts {
   watts: number;
 }
 
+interface EtatService {
+  name: string;
+  url: string;
+  status: string;
+}
+
 function App() {
   const [historyCPU, setHistoryCPU] = useState<ChartPointCPU[]>([]);
   const [historyRAM, setHistoryRAM] = useState<ChartPointRAM[]>([]);
   const [historyStorage, setHistoryStorage] = useState<ChartPointStorage[]>([]);
   const [historyWatts, setHistoryWatts] = useState<ChartPointWatts[]>([]);
+  const [etatServices, setEtatServices] = useState<EtatService[]>([]);
 
   const fetchLiveStats = async () => {
     try {
@@ -44,6 +51,15 @@ function App() {
       setHistoryWatts(prev => [...prev, { time, watts: data.watts }].slice(-61)); // Récupération des Watts !
       
     } catch (err) {
+      console.error("Erreur API :", err);
+    }
+
+    try {
+      const res = await fetch("https://api-dashboard.timote.ovh/api/services");
+      const data = await res.json();
+      setEtatServices(data);
+    }
+    catch (err) {
       console.error("Erreur API :", err);
     }
   };
@@ -111,6 +127,13 @@ function App() {
       <h1 className="text-2xl font-bold mb-8">Dashboard Serveur</h1>
       
       <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+
+        {etatServices.map((valeur,key) => (
+          <div key={key}> 
+          
+            {valeur.name}
+          </div>
+        ))}
         
         <StatChart 
           title="CPU Performance" 

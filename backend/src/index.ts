@@ -5,6 +5,9 @@ import { cors } from 'hono/cors'
 import si from 'systeminformation'
 import Database from 'better-sqlite3'
 import { MerossService } from './meross.js'
+import Docker from 'dockerode';
+
+const docker = new Docker({ socketPath: '/var/run/docker.sock' });
 
 const app = new Hono()
 const meross = new MerossService()
@@ -141,6 +144,46 @@ setInterval(async () => {
     console.error('Erreur lors de la sauvegarde SQLite:', err);
   }
 }, 60000);
+
+app.get('/api/services', async (c) => {
+  try {
+    // On demande à Docker la liste de TOUS les conteneurs
+    const containers = await docker.listContainers({ all: true });
+
+    // On transforme cette donnée brute en belle liste pour ton React
+    const services = containers
+      .map(container => {
+        // Le nom du conteneur commence souvent par un "/", on l'enlève
+        const rawName = container.Names[0].replace('/', ''); 
+        
+        // On nettoie un peu le nom (par exemple "ent-app-1" devient "ent")
+        const cleanName = rawName.split('-')[0];
+
+        return {
+          name: cleanName.toUpperCase(),
+          // On génère le sous-domaine automatiquement !
+          url: `https://${cleanName}.timote.ovh`, 
+          // Si l'état est "running", c'est vert, sinon c'est rouge
+          status: container.State === 'running' ? 'online' : 'offline'
+        };
+      })
+      // On filtre pour ne pas afficher le dashboard lui-même ou les bases de données internes
+      .filter(s => 
+        !s.name.includes('DASHBOARD') && 
+        !s.name.includes('DB') && 
+        !s.name.includes('MARIADB')
+      );
+
+    // Pour éviter les doublons si tu as plusieurs conteneurs pour un même projet
+    const uniqueServices = Array.from(new Map(services.map(item => [item.name, item])).values());
+
+    return c.json(uniqueServices);
+
+  } catch (error) {
+    console.error("Erreur de communication avec Docker:", error);
+    return c.json({ error: "Impossible de lire les services" }, 500);
+  }
+});
 
 const port = 8085
 console.log(`Serveur dashboard lancé sur http://localhost:${port}`)
