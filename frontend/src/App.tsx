@@ -26,9 +26,11 @@ interface ChartPointWatts {
 }
 
 interface EtatService {
+  id: string;
   name: string;
   url: string;
   status: string;
+  githubRepo: string | null; 
 }
 
 function App() {
@@ -159,40 +161,6 @@ function App() {
       <h1 className="text-2xl font-bold mb-8">Dashboard Serveur</h1>
       
       <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
-
-        {githubStatus && githubStatus['chambre-3d'] && (
-          <div className="p-4 bg-gray-800 rounded-xl shadow-lg border border-gray-700">
-            <h2 className="text-xl font-bold mb-4 text-white">⚙️ Déploiement Chambre-3D</h2>
-            
-            <div className="flex items-center space-x-4">
-              {/* L'icône animée */}
-              {(githubStatus['chambre-3d'].status === 'in_progress' || githubStatus['chambre-3d'].status === 'queued') ? (
-                <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-              ) : githubStatus['chambre-3d'].conclusion === 'success' ? (
-                <div className="w-8 h-8 rounded-full bg-green-500 shadow-[0_0_10px_#22c55e] flex items-center justify-center text-white font-bold">✓</div>
-              ) : githubStatus['chambre-3d'].conclusion === 'failure' ? (
-                <div className="w-8 h-8 rounded-full bg-red-500 shadow-[0_0_10px_#ef4444] flex items-center justify-center text-white font-bold">✗</div>
-              ) : (
-                <div className="w-8 h-8 rounded-full bg-gray-500 flex items-center justify-center text-white font-bold">-</div>
-              )}
-
-              {/* Le texte */}
-              <div className="flex flex-col">
-                <span className="font-medium text-gray-200">
-                  {githubStatus['chambre-3d'].message}
-                </span>
-                <span className="text-xs text-gray-400">
-                  {githubStatus['chambre-3d'].status === 'in_progress' ? 'Construction en cours...' 
-                    : githubStatus['chambre-3d'].conclusion === 'success' ? 'En ligne' 
-                    : githubStatus['chambre-3d'].conclusion === 'failure' ? 'Échec du déploiement'
-                    : 'En attente'}
-                </span>
-              </div>
-            </div>
-          </div>
-        )}
-
-        
         
         <StatChart 
           title="CPU Performance" 
@@ -229,15 +197,60 @@ function App() {
 
       </div>
 
-      <div className='flex flex-col gap-4 border-1 border-black w-max p-4 rounded-xl mt-5 '>
-          {etatServices.map((valeur,key) => (
-            <div key={key} className='flex flex-row gap-3 items-center '> 
+      <div className='flex flex-col gap-4 border-1 border-black w-max p-4 rounded-xl mt-5'>
+        {etatServices.map((service, key) => {
+          
+          // On récupère les données GitHub SI le service a un repo (sinon on met null)
+          // On ajoute aussi notre sécurité "par défaut" pour éviter que ça ne crash au redémarrage
+          const repoData = service.githubRepo 
+            ? (githubStatus && githubStatus[service.githubRepo]) || {
+                status: 'idle',
+                conclusion: null,
+                message: 'En attente...'
+              }
+            : null;
+
+          return (
+            <div key={key} className='flex flex-row gap-4 items-center p-2'>
+              {/* 1. La pastille de santé (Toujours affichée) */}
+              <div className={`rounded-xl h-5 w-5 ${service.status === "online" ? 'bg-green-300' : 'bg-red-300'}`}></div>
               
-              {valeur.status === "online" ? <div className='rounded-xl bg-green-300 h-5 w-5'></div> : <div className='rounded-xl bg-red-300 h-5 w-5'></div> }
-              {valeur.name}
+              {/* 2. Le nom du service (Toujours affiché) */}
+              <span className="font-semibold text-lg min-w-[120px]">{service.name}</span>
+
+              {/* 3. L'état GitHub (Affiché UNIQUEMENT si c'est un projet lié à GitHub) */}
+              {repoData && (
+                <div className="flex items-center gap-3 bg-gray-800 px-3 py-1 rounded-lg border border-gray-700">
+                  
+                  {/* L'icône animée */}
+                  {(repoData.status === 'in_progress' || repoData.status === 'queued') ? (
+                    <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                  ) : repoData.conclusion === 'success' ? (
+                    <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center text-white text-xs font-bold">✓</div>
+                  ) : repoData.conclusion === 'failure' ? (
+                    <div className="w-5 h-5 rounded-full bg-red-500 flex items-center justify-center text-white text-xs font-bold">✗</div>
+                  ) : (
+                    <div className="w-5 h-5 rounded-full bg-gray-600 flex items-center justify-center text-white text-xs font-bold">-</div>
+                  )}
+
+                  {/* Le texte */}
+                  <div className="flex flex-col">
+                    <span className="text-sm font-medium text-gray-200 line-clamp-1 max-w-[200px]">
+                      {repoData.message}
+                    </span>
+                    <span className="text-[10px] text-gray-400">
+                      {repoData.status === 'in_progress' ? 'Construction...' 
+                        : repoData.conclusion === 'success' ? 'En ligne' 
+                        : repoData.conclusion === 'failure' ? 'Échec'
+                        : 'En attente'}
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
-          ))}
-        </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

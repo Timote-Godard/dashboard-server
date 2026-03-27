@@ -34,12 +34,6 @@ const MES_PROJETS = [
     githubRepo: 'chambre-3D' // Pour l'état du déploiement
   },
   { 
-    id: 'dashboard',
-    nom: 'Mon Dashboard', 
-    url: 'https://chambre.timote.ovh',
-    githubRepo: 'dashboard-server' // Pour l'état du déploiement
-  },
-  { 
     id: 'ent',
     nom: 'Mon ENT', 
     url: 'https://ent.timote.ovh',
@@ -215,40 +209,29 @@ app.get('/api/github-status', (c) => {
 
 app.get('/api/services', async (c) => {
   try {
-    // On lance toutes les requêtes en même temps pour que ça aille très vite
     const checkPromises = MES_PROJETS.map(async (projet) => {
       let status = 'offline';
-      
       try {
-        // On tente de joindre l'URL avec un timeout de 5 secondes maximum
-        const res = await fetch(projet.url, {
-          method: 'HEAD', // 'HEAD' télécharge juste l'entête, pas toute la page HTML (c'est plus rapide)
-          signal: AbortSignal.timeout(5000) 
-        });
-        
-        // Si le site répond un code 200 (OK), on le passe en ligne
-        if (res.ok) {
-          status = 'online';
-        }
+        const res = await fetch(projet.url, { method: 'HEAD', signal: AbortSignal.timeout(5000) });
+        if (res.ok) status = 'online';
       } catch (error) {
-        // Si ça plante (timeout, pas de réseau), ça restera 'offline'
         status = 'offline';
       }
 
+      // 👇 ON RENVOIE TOUTES LES INFOS DU PROJET ICI 👇
       return {
+        id: projet.id,
         name: projet.nom,
         url: projet.url,
-        status: status
+        status: status,
+        // On sécurise en mettant le repo en minuscules (comme on a vu tout à l'heure !)
+        githubRepo: projet.githubRepo ? projet.githubRepo.toLowerCase() : null 
       };
     });
 
-    // On attend que tous les sites aient répondu
     const servicesStatus = await Promise.all(checkPromises);
-    
     return c.json(servicesStatus);
-
   } catch (error) {
-    console.error("Erreur lors de la vérification des services:", error);
     return c.json({ error: "Impossible de lire les services" }, 500);
   }
 });
