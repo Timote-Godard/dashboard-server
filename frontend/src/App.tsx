@@ -161,36 +161,36 @@ function App() {
       <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
 
         {githubStatus && githubStatus['chambre-3d'] && (
-  <div className="p-4 bg-gray-800 rounded-xl shadow-lg border border-gray-700">
-    <h2 className="text-xl font-bold mb-4 text-white">⚙️ Déploiement Chambre-3D</h2>
-    
-    <div className="flex items-center space-x-4">
-      {/* L'icône animée */}
-      {(githubStatus['chambre-3d'].status === 'in_progress' || githubStatus['chambre-3d'].status === 'queued') ? (
-        <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-      ) : githubStatus['chambre-3d'].conclusion === 'success' ? (
-        <div className="w-8 h-8 rounded-full bg-green-500 shadow-[0_0_10px_#22c55e] flex items-center justify-center text-white font-bold">✓</div>
-      ) : githubStatus['chambre-3d'].conclusion === 'failure' ? (
-        <div className="w-8 h-8 rounded-full bg-red-500 shadow-[0_0_10px_#ef4444] flex items-center justify-center text-white font-bold">✗</div>
-      ) : (
-        <div className="w-8 h-8 rounded-full bg-gray-500 flex items-center justify-center text-white font-bold">-</div>
-      )}
+          <div className="p-4 bg-gray-800 rounded-xl shadow-lg border border-gray-700">
+            <h2 className="text-xl font-bold mb-4 text-white">⚙️ Déploiement Chambre-3D</h2>
+            
+            <div className="flex items-center space-x-4">
+              {/* L'icône animée */}
+              {(githubStatus['chambre-3d'].status === 'in_progress' || githubStatus['chambre-3d'].status === 'queued') ? (
+                <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+              ) : githubStatus['chambre-3d'].conclusion === 'success' ? (
+                <div className="w-8 h-8 rounded-full bg-green-500 shadow-[0_0_10px_#22c55e] flex items-center justify-center text-white font-bold">✓</div>
+              ) : githubStatus['chambre-3d'].conclusion === 'failure' ? (
+                <div className="w-8 h-8 rounded-full bg-red-500 shadow-[0_0_10px_#ef4444] flex items-center justify-center text-white font-bold">✗</div>
+              ) : (
+                <div className="w-8 h-8 rounded-full bg-gray-500 flex items-center justify-center text-white font-bold">-</div>
+              )}
 
-      {/* Le texte */}
-      <div className="flex flex-col">
-        <span className="font-medium text-gray-200">
-          {githubStatus['chambre-3d'].message}
-        </span>
-        <span className="text-xs text-gray-400">
-          {githubStatus['chambre-3d'].status === 'in_progress' ? 'Construction en cours...' 
-            : githubStatus['chambre-3d'].conclusion === 'success' ? 'En ligne' 
-            : githubStatus['chambre-3d'].conclusion === 'failure' ? 'Échec du déploiement'
-            : 'En attente'}
-        </span>
-      </div>
-    </div>
-  </div>
-)}
+              {/* Le texte */}
+              <div className="flex flex-col">
+                <span className="font-medium text-gray-200">
+                  {githubStatus['chambre-3d'].message}
+                </span>
+                <span className="text-xs text-gray-400">
+                  {githubStatus['chambre-3d'].status === 'in_progress' ? 'Construction en cours...' 
+                    : githubStatus['chambre-3d'].conclusion === 'success' ? 'En ligne' 
+                    : githubStatus['chambre-3d'].conclusion === 'failure' ? 'Échec du déploiement'
+                    : 'En attente'}
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
 
         
         

@@ -31,7 +31,13 @@ const MES_PROJETS = [
     id: 'chambre',
     nom: 'Chambre 3D', 
     url: 'https://chambre.timote.ovh',
-    githubRepo: 'chambre-3d' // Pour l'état du déploiement
+    githubRepo: 'chambre-3D' // Pour l'état du déploiement
+  },
+  { 
+    id: 'dashboard',
+    nom: 'Mon Dashboard', 
+    url: 'https://chambre.timote.ovh',
+    githubRepo: 'dashboard-server' // Pour l'état du déploiement
   },
   { 
     id: 'ent',
