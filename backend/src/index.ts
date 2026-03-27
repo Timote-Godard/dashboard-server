@@ -50,6 +50,12 @@ const MES_PROJETS = [
     nom: 'Mes Notes', 
     url: 'https://notes.timote.ovh',
     githubRepo: null // Pas de repo GitHub, c'est juste une image Docker !
+  },
+  { 
+    id: 'quiz',
+    nom: 'Quiz entre Potes', 
+    url: 'https://quiz.timote.ovh',
+    githubRepo: 'Culture-de-geek'
   }
 ];
 
