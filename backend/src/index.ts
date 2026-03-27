@@ -169,10 +169,22 @@ setInterval(async () => {
   }
 }, 60000);
 
-let githubState: Record<string, any> = {
-  'chambre-3d': { status: 'idle', conclusion: null, message: 'Aucun déploiement récent' },
-  // Tu pourras ajouter 'ent-frontend' ici plus tard
-};
+let githubState: Record<string, any> = {};
+
+// 2. On la remplit automatiquement au démarrage du serveur
+MES_PROJETS.forEach(projet => {
+  // On ne crée une case mémoire QUE si le projet a un repo GitHub
+  if (projet.githubRepo) {
+    // ⚠️ On force le nom en minuscules pour éviter le fameux bug de tout à l'heure !
+    const repoName = projet.githubRepo.toLowerCase();
+    
+    githubState[repoName] = { 
+      status: 'idle', 
+      conclusion: null, 
+      message: 'Aucun déploiement récent' 
+    };
+  }
+});
 
 // 2. La "boîte aux lettres" secrète pour GitHub (Webhook)
 app.post('/api/github-webhook', async (c) => {
