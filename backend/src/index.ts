@@ -147,40 +147,24 @@ setInterval(async () => {
 
 app.get('/api/services', async (c) => {
   try {
-    // On demande à Docker la liste de TOUS les conteneurs
     const containers = await docker.listContainers({ all: true });
 
-    // On transforme cette donnée brute en belle liste pour ton React
-    const services = containers
-      .map(container => {
-        // Le nom du conteneur commence souvent par un "/", on l'enlève
-        const rawName = container.Names[0].replace('/', ''); 
-        
-        // On nettoie un peu le nom (par exemple "ent-app-1" devient "ent")
-        const cleanName = rawName.split('-')[0];
+    // 1. On filtre : on ne garde QUE les conteneurs qui ont notre étiquette secrète
+    const dashboardContainers = containers.filter(c => 
+      c.Labels && c.Labels['dashboard.name']
+    );
 
-        return {
-          name: cleanName.toUpperCase(),
-          // On génère le sous-domaine automatiquement !
-          url: `https://${cleanName}.timote.ovh`, 
-          // Si l'état est "running", c'est vert, sinon c'est rouge
-          status: container.State === 'running' ? 'online' : 'offline'
-        };
-      })
-      // On filtre pour ne pas afficher le dashboard lui-même ou les bases de données internes
-      .filter(s => 
-        !s.name.includes('DASHBOARD') && 
-        !s.name.includes('DB') && 
-        !s.name.includes('MARIADB')
-      );
+    // 2. On formate proprement avec les vraies infos
+    const services = dashboardContainers.map(container => ({
+      name: container.Labels['dashboard.name'], // Ex: "Nextcloud"
+      url: container.Labels['dashboard.url'],   // Ex: "https://cloud.timote.ovh"
+      status: container.State === 'running' ? 'online' : 'offline'
+    }));
 
-    // Pour éviter les doublons si tu as plusieurs conteneurs pour un même projet
-    const uniqueServices = Array.from(new Map(services.map(item => [item.name, item])).values());
-
-    return c.json(uniqueServices);
+    return c.json(services);
 
   } catch (error) {
-    console.error("Erreur de communication avec Docker:", error);
+    console.error("Erreur Docker:", error);
     return c.json({ error: "Impossible de lire les services" }, 500);
   }
 });
