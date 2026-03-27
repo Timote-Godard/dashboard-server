@@ -187,7 +187,7 @@ app.post('/api/github-webhook', async (c) => {
 
     // On vérifie que c'est bien une notification de "Workflow" (déploiement)
     if (data.workflow_run) {
-      const repoName = data.repository.name; // ex: "chambre-3d"
+      const repoName = data.repository.name.toLowerCase(); // ex: "chambre-3d"
       const run = data.workflow_run;
 
       // On met à jour notre mémoire INSTANTANÉMENT
