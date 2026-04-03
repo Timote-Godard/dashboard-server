@@ -1,9 +1,164 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo, Suspense, useRef } from 'react';
 import StatChart from "./components/StatChart";
 
+// Imports pour la 3D
+import { Canvas, useFrame } from '@react-three/fiber';
+import { useGLTF, OrbitControls, Environment, Text, useCursor, Html, PerformanceMonitor } from '@react-three/drei';
+import * as THREE from 'three';
+
+const VUES_CAMERA = [
+  { position: [5.33, 17.67, -0.12], rotation: [-1.57, 0.29, 1.56] }, // 0: Boutons (Ta vue actuelle)
+  { position: [23, 17.67, -0.12], rotation: [-1.57, 0.29, 1.56] },    // 1: Commits (Exemple: on décale sur X)
+  { position: [44.7, 17.67, -0.12], rotation: [-1.57, 0.29, 1.56] }     // 2: Graphiques (Exemple: encore plus loin sur X)
+];
+
+interface GithubCommit {
+  projet: string;
+  message: string;
+  auteur: string;
+  date: string;
+  hash: string;
+  url: string;
+}
 
 
-// Interfaces pour le typage des données
+function CameraController({ vueActive }) {
+  useFrame((state) => {
+    const vueCible = VUES_CAMERA[vueActive];
+
+    // On fait glisser la position en douceur
+    state.camera.position.x = THREE.MathUtils.lerp(state.camera.position.x, vueCible.position[0], 0.05);
+    state.camera.position.y = THREE.MathUtils.lerp(state.camera.position.y, vueCible.position[1], 0.05);
+    state.camera.position.z = THREE.MathUtils.lerp(state.camera.position.z, vueCible.position[2], 0.05);
+
+    // On fait glisser la rotation en douceur
+    state.camera.rotation.x = THREE.MathUtils.lerp(state.camera.rotation.x, vueCible.rotation[0], 0.05);
+    state.camera.rotation.y = THREE.MathUtils.lerp(state.camera.rotation.y, vueCible.rotation[1], 0.05);
+    state.camera.rotation.z = THREE.MathUtils.lerp(state.camera.rotation.z, vueCible.rotation[2], 0.05);
+  });
+
+  return null; // Ce composant n'affiche rien, il pilote juste !
+}
+
+// --- COMPOSANT 3D OPTIMISÉ ---
+function ModelePlaque({ service }: { service: any }) {
+  const { nodes } = useGLTF('/plaque.glb') as any;
+
+  const materialPlaque = useMemo(() => new THREE.MeshStandardMaterial({
+    color: '#666666', metalness: 0.8, roughness: 0.25 
+  }), []);
+
+  // 3. LA CONFIGURATION : Tes 8 boutons avec leurs textes et couleurs "Néon"
+  const configurationBoutons = [
+    { nom: 'bouton1', texte: 'PORTFOLIO', couleurTexte: '#00ffff', couleurBouton: '#004444', url: 'https://ton-portfolio.com' },
+    { nom: 'bouton2', texte: 'ANALYTICS', couleurTexte: '#ff4444', couleurBouton: '#550000', url: 'https://analytics.google.com' },
+    { nom: 'bouton3', texte: 'PROJET 1', couleurTexte: '#ffbb00', couleurBouton: '#553300', url: 'https://projet1.com' },
+    { nom: 'bouton4', texte: 'GITHUB', couleurTexte: '#00ff00', couleurBouton: '#004400', url: 'https://github.com/ton-profil' },
+    { nom: 'bouton5', texte: 'API', couleurTexte: '#aa00ff', couleurBouton: '#220044', url: 'https://api.ton-site.com' },
+    { nom: 'bouton6', texte: 'MAIL', couleurTexte: '#ffffff', couleurBouton: '#444444', url: 'https://mail.google.com' },
+    { nom: 'bouton7', texte: 'DB', couleurTexte: '#0088ff', couleurBouton: '#002255', url: 'https://supabase.com' },
+    { nom: 'bouton8', texte: 'SERVEUR', couleurTexte: '#ff00aa', couleurBouton: '#550033', url: 'https://ovh.com' }
+  ];
+
+    return (
+    <group dispose={null} rotation={[0, 0, 0]}>
+      {/* LA PLAQUE */}
+      <mesh geometry={nodes.plaque.geometry} position={nodes.plaque.position} rotation={nodes.plaque.rotation} material={materialPlaque} />
+
+      {/* LES BOUTONS INTERACTIFS */}
+      {configurationBoutons.map((bouton, index) => {
+        const node = nodes[bouton.nom];
+        if (!node) return null; 
+
+        // On appelle notre usine à boutons magiques !
+        return <BoutonInteractif key={index} node={node} bouton={bouton} />;
+      })}
+    </group>
+  );
+}
+
+function BoutonInteractif({ node, bouton }: BoutonInteractifProps) {
+  const [hover, setHover] = useState(false);
+  const [pressed, setPressed] = useState(false); // Nouveau : on détecte le clic enfoncé
+  const innerGroupRef = useRef<THREE.Group>(null); // Pour animer le bouton
+
+  // Change le curseur au survol
+  useCursor(hover);
+
+  // L'ANIMATION OPTIMISÉE (Tourne à chaque image)
+  useFrame(() => {
+    if (!innerGroupRef.current) return;
+    
+    // On calcule la profondeur : -0.1 si on clique, -0.05 si on survole, 0 si rien
+    const targetY = pressed ? -0.1 : (hover ? -0.5 : 0);
+    
+    // lerp() permet d'aller d'un point A à un point B de façon ultra-fluide
+    innerGroupRef.current.position.y = THREE.MathUtils.lerp(
+      innerGroupRef.current.position.y, 
+      targetY, 
+      0.2 // Vitesse de l'animation (0.1 = lent, 0.5 = très rapide)
+    );
+  });
+
+  return (
+    <group 
+      position={node.position}
+      // LES ÉVÉNEMENTS SOURIS
+      onPointerOver={(e) => { e.stopPropagation(); setHover(true); }}
+      onPointerOut={(e) => { setHover(false); setPressed(false); }} // Si on sort, le bouton remonte
+      onPointerDown={(e) => { e.stopPropagation(); setPressed(true); }} // On enfonce le clic
+      onPointerUp={(e) => { e.stopPropagation(); setPressed(false); }} // On relâche le clic
+      onClick={(e) => {
+        e.stopPropagation(); 
+        window.open(bouton.url, '_blank');
+      }}
+    >
+      {/* Ce groupe interne est celui qui va monter et descendre avec le useRef */}
+      <group ref={innerGroupRef}>
+        
+        {/* LE PLASTIQUE */}
+        <mesh geometry={node.geometry} rotation={node.rotation}>
+           <meshStandardMaterial color={bouton.couleurBouton} roughness={0.4} metalness={0.2} />
+        </mesh>
+        
+        {/* LE TEXTE */}
+        <Text
+          position={[0, 0.81, 0]} 
+          rotation={[-Math.PI / 2, 0, Math.PI / 2]}
+          fontSize={0.5}
+          textAlign="center"
+          anchorX="center"
+          anchorY="middle"
+        >
+          {bouton.texte}
+          <meshBasicMaterial attach="material" color={bouton.couleurTexte} />
+        </Text>
+
+      </group>
+    </group>
+  );
+}
+
+// On précharge le modèle pour que l'affichage soit instantané
+useGLTF.preload('/plaque.glb');
+
+
+// --- INTERFACES ---
+
+interface BoutonConfig {
+  texte: string;
+  url: string;
+  couleurTexte: string;
+  couleurBouton: string;
+}
+
+// 2. On type les "props" (les paramètres) de ton composant
+interface BoutonInteractifProps {
+  node: any; // "any" évite de se casser la tête avec les types complexes de Three.js
+  bouton: BoutonConfig;
+}
+
+
 interface ChartPointRAM {
   time: string;
   ramUsed: number; 
@@ -33,6 +188,8 @@ interface EtatService {
   githubRepo: string | null; 
 }
 
+
+// --- APPLICATION PRINCIPALE ---
 function App() {
   const [historyCPU, setHistoryCPU] = useState<ChartPointCPU[]>([]);
   const [historyRAM, setHistoryRAM] = useState<ChartPointRAM[]>([]);
@@ -41,13 +198,17 @@ function App() {
   const [etatServices, setEtatServices] = useState<EtatService[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [githubStatus, setGithubStatus] = useState<any>(null);
+  const [moduleActif, setModuleActif] = useState(0);
+  const [dpr, setDpr] = useState(1.5);
+  const [commits, setCommits] = useState<GithubCommit[]>([]);
+
+  const allerAuSuivant = () => setModuleActif((prev) => Math.min(prev + 1, 2));
+  const allerAuPrecedent = () => setModuleActif((prev) => Math.max(prev - 1, 0));
 
   const fetchLiveStats = async () => {
     try {
       const res = await fetch('https://api-dashboard.timote.ovh/api/stats');
-      if (!res) {
-        console.log('pas bon');
-      }
+      if (!res) console.log('pas bon');
       const data = await res.json();
       const time = new Date().toLocaleTimeString();
 
@@ -55,7 +216,6 @@ function App() {
       setHistoryRAM(prev => [...prev, { time, ramUsed: data.ram.used }].slice(-61));
       setHistoryStorage(prev => [...prev, { time, storageUsed: data.storage.used }].slice(-61));
       setHistoryWatts(prev => [...prev, { time, watts: data.watts }].slice(-61)); 
-      
     } catch (err) {
       console.error("Erreur API :", err);
     }
@@ -64,8 +224,7 @@ function App() {
       const res = await fetch("https://api-dashboard.timote.ovh/api/services");
       const data = await res.json();
       setEtatServices(data);
-    }
-    catch (err) {
+    } catch (err) {
       console.error("Erreur API :", err);
     }
 
@@ -76,51 +235,33 @@ function App() {
     } catch (err) {
       console.error("Erreur API GitHub Status :", err);
     }
-  };
 
+    try {
+      const resCommits = await fetch('https://api-dashboard.timote.ovh/api/commits');
+      const dataCommits = await resCommits.json();
+      setCommits(dataCommits);
+    } catch (err) {
+      console.error("Erreur API GitHub Status :", err);
+    }
+  };
 
   const fetchHistory = async () => {
     try {
-      // ⚠️ N'oublie pas de mettre l'URL / IP de ton serveur !
       const res = await fetch('https://api-dashboard.timote.ovh/api/history');
       if (!res.ok) return;
       
       const data = await res.json();
 
-      
-      
-      // On transforme les données brutes de la base de données (SQLite) au format attendu par tes graphiques (Recharts)
       const formatTimestamp = (timestamp: string) => {
         const utcDate = new Date(timestamp.includes('Z') ? timestamp : timestamp + 'Z');
-        return utcDate.toLocaleTimeString('fr-FR', { 
-          hour: '2-digit', 
-          minute: '2-digit' 
-        });
+        return utcDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
       };
 
-      // 2. On applique la logique à tous tes jeux de données
-      const formattedCPU = data.map((d: any) => ({ 
-        time: formatTimestamp(d.timestamp),
-        temp: d.cpu_temp, 
-        load: d.cpu_load 
-      }));
+      const formattedCPU = data.map((d: any) => ({ time: formatTimestamp(d.timestamp), temp: d.cpu_temp, load: d.cpu_load }));
+      const formattedRAM = data.map((d: any) => ({ time: formatTimestamp(d.timestamp), ramUsed: d.ram_used }));
+      const formattedStorage = data.map((d: any) => ({ time: formatTimestamp(d.timestamp), storageUsed: d.storage_used }));
+      const formattedWatts = data.map((d: any) => ({ time: formatTimestamp(d.timestamp), watts: d.watts }));
 
-      const formattedRAM = data.map((d: any) => ({ 
-        time: formatTimestamp(d.timestamp), 
-        ramUsed: d.ram_used
-      }));
-
-      const formattedStorage = data.map((d: any) => ({ 
-        time: formatTimestamp(d.timestamp), 
-        storageUsed: d.storage_used 
-      }));
-
-      const formattedWatts = data.map((d: any) => ({ 
-        time: formatTimestamp(d.timestamp), 
-        watts: d.watts 
-      }));
-
-      // On injecte d'un coup l'historique dans les graphiques
       setHistoryCPU(formattedCPU);
       setHistoryRAM(formattedRAM);
       setHistoryStorage(formattedStorage);
@@ -136,10 +277,7 @@ function App() {
     const demarrerDashboard = async () => {
       await fetchHistory(); 
       await fetchLiveStats(); 
-      
-      // 👇 LES DONNÉES SONT LÀ : ON ENLÈVE LE CHARGEMENT 👇
       setIsLoading(false); 
-
       interval = setInterval(fetchLiveStats, 3000);
     };
 
@@ -157,102 +295,282 @@ function App() {
   }
 
   return (
-    <div className='min-h-screen w-screen p-8'>
-      <h1 className="text-2xl font-bold mb-8">Dashboard Serveur</h1>
+    <div className="w-screen h-screen">
       
-      <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
-        
-        <StatChart 
-          title="CPU Performance" 
-          data={historyCPU}
-          yDomain={[0, 100]} 
-          metrics={[
-            { key: 'temp', color: '#8884d8', label: 'Température (°C)' },
-            { key: 'load', color: '#ff4444', label: 'Charge (%)' }
-          ]} 
-        />
 
-        <StatChart 
-          title="RAM Used" 
-          data={historyRAM}
-          yDomain={[0, 16]} 
-          metrics={[{ key: 'ramUsed', color: '#00C49F', label: 'Utilisation' }]} 
-        />
+      {/* --- MODULE 2 : L'ÉCRAN DE COMMITS --- */}
+      {/* On le décale sur X (ex: 30) pour qu'il soit au niveau de ta 2ème vue caméra */}
+      
+        {/* dpr={[1, 1.5]} bride la résolution pour sauver ton PC */}
+        <Canvas dpr={dpr} camera={{ position: [5.30, 17.67, -0.12], rotation: [-1.57, 0.29, 1.56], fov: 45 }}>
 
-        <StatChart 
-          title="Stockage" 
-          data={historyStorage}
-          yDomain={[0, 100]} 
-          metrics={[{ key: 'storageUsed', color: '#FFBB28', label: 'Go Utilisés' }]} 
-        />
+          <PerformanceMonitor 
+            onDecline={() => setDpr(0.5)} // Mode "Sauvetage" pour vieux PC
+            onIncline={() => setDpr(1)} // Mode "HD" pour PC Gamer
+          />
+          {/* Couleur de fond intégrée à l'UI */}
+          <color attach="background" args={['#1f2937']} />
 
-        <StatChart 
-          title="Consommation Électrique" 
-          data={historyWatts}
-          yDomain={[0, 'auto']}
-          metrics={[{ key: 'watts', color: '#0088FE', label: 'Watts' }]} 
-        />
+          <ambientLight intensity={0.2} />
+          <directionalLight position={[10, 10, 5]} intensity={2} />
+          <Environment preset="city" />
 
-        
+          <CameraController vueActive={moduleActif} />
 
-      </div>
-
-      <div className='flex flex-col gap-4 border-1 border-black w-max p-4 rounded-xl mt-5'>
-        {etatServices.map((service, key) => {
+          <Suspense fallback={null}>
+              <ModelePlaque />
+          </Suspense>
           
-          // On récupère les données GitHub SI le service a un repo (sinon on met null)
-          // On ajoute aussi notre sécurité "par défaut" pour éviter que ça ne crash au redémarrage
-          const repoData = service.githubRepo 
-            ? (githubStatus && githubStatus[service.githubRepo]) || {
-                status: 'idle',
-                conclusion: null,
-                message: 'En attente...'
-              }
-            : null;
 
-          return (
-            <div key={key} className='flex flex-row gap-4 items-center p-2'>
-              {/* 1. La pastille de santé (Toujours affichée) */}
-              <div className={`rounded-xl h-5 w-5 ${service.status === "online" ? 'bg-green-300' : 'bg-red-300'}`}></div>
-              
-              {/* 2. Le nom du service (Toujours affiché) */}
-              <span className="font-semibold text-lg min-w-[120px]">{service.name}</span>
+          <group position={[16.87, -0.3, 0]}>
+        
 
-              {/* 3. L'état GitHub (Affiché UNIQUEMENT si c'est un projet lié à GitHub) */}
-              {repoData && (
-                <div className="flex items-center gap-3 bg-gray-800 px-3 py-1 rounded-lg border border-gray-700">
-                  
-                  {/* L'icône animée */}
-                  {(repoData.status === 'in_progress' || repoData.status === 'queued') ? (
-                    <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-                  ) : repoData.conclusion === 'success' ? (
-                    <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center text-white text-xs font-bold">✓</div>
-                  ) : repoData.conclusion === 'failure' ? (
-                    <div className="w-5 h-5 rounded-full bg-red-500 flex items-center justify-center text-white text-xs font-bold">✗</div>
-                  ) : (
-                    <div className="w-5 h-5 rounded-full bg-gray-600 flex items-center justify-center text-white text-xs font-bold">-</div>
-                  )}
+        {/* L'INCRUSTATION HTML */}
+        <Html
+          transform    // Applique la perspective 3D
+          distanceFactor={8} // Règle la taille du HTML par rapport à la 3D
+          position={[0, 0, -6.92]} // Un poil au-dessus du cadre pour éviter le clignotement
+          rotation={[-Math.PI / 2, 0, Math.PI / 2]} // Couché à plat sur la plaque
+        >
+          {/* TON CODE HTML / REACT CLASSIQUE ICI */}
+          <div className="w-[615px] h-[445px] bg-black border-2 border-cyan-900 rounded-lg flex flex-col font-mono text-cyan-400 ">
+            
+            <div className="flex justify-between border-b border-cyan-900 pb-2 mb-4">
+              <span className="text-xs uppercase tracking-widest">System Monitor // Git Log</span>
+              <span className="text-xs">v1.0.4</span>
+            </div>
 
-                  {/* Le texte */}
-                  <div className="flex flex-col">
-                    <span className="text-sm font-medium text-gray-200 line-clamp-1 max-w-[200px]">
-                      {repoData.message}
-                    </span>
-                    <span className="text-[10px] text-gray-400">
-                      {repoData.status === 'in_progress' ? 'Construction...' 
-                        : repoData.conclusion === 'success' ? 'En ligne' 
-                        : repoData.conclusion === 'failure' ? 'Échec'
-                        : 'En attente'}
-                    </span>
+            <div className="flex-1 overflow-y-auto space-y-3 custom-scrollbar">
+              {/* Exemple de liste de commits (à remplacer par tes data GitHub) */}
+              {commits.map((c, i) => (
+                <div key={i} className="border-l-2 border-cyan-500 pl-4 py-1 mb-2">
+                  <div className="text-xs font-bold text-white leading-tight">{c.message}</div>
+                  <div className="text-[9px] opacity-70 flex justify-between uppercase">
+                    <span>{c.projet} • {new Date(c.date).toLocaleDateString()}</span>
+                    <span className="text-cyan-600">#{c.hash}</span>
                   </div>
                 </div>
-              )}
+              ))}
             </div>
-          );
-        })}
+
+          </div>
+
+        </Html>
+
+        <Html
+          transform    // Applique la perspective 3D
+          distanceFactor={8} // Règle la taille du HTML par rapport à la 3D
+          position={[0, 0, 6.92]} // Un poil au-dessus du cadre pour éviter le clignotement
+          rotation={[-Math.PI / 2, 0, Math.PI / 2]} // Couché à plat sur la plaque
+        >
+          {/* TON CODE HTML / REACT CLASSIQUE ICI */}
+          <div className="w-[615px] h-[445px] bg-black border-2 border-cyan-900 rounded-lg flex flex-col font-mono text-cyan-400">
+            
+            <div className="flex justify-between border-b border-cyan-900 pb-2 mb-4">
+              <span className="text-xs uppercase tracking-widest">System Monitor // Git Log</span>
+              <span className="text-xs">v1.0.4</span>
+            </div>
+
+            <div className="flex-1 overflow-y-auto space-y-3 custom-scrollbar">
+              {/* Exemple de liste de commits (à remplacer par tes data GitHub) */}
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div key={i} className="border-l-2 border-cyan-500 pl-4 py-1 hover:bg-cyan-950 transition-colors">
+                  <div className="text-sm font-bold text-white">feat: update dashboard 3D positioning</div>
+                  <div className="text-[10px] opacity-60">2 hours ago by Timoté • hash: 7f3a21b</div>
+                </div>
+              ))}
+            </div>
+
+          </div>
+          
+        </Html>
+          </group>
+
+      <group position={[38.3, 0.6, 0]}>
+        
+
+        {/* L'INCRUSTATION HTML */}
+        <Html
+          transform    // Applique la perspective 3D
+          distanceFactor={8} // Règle la taille du HTML par rapport à la 3D
+          position={[4.08,0, -6.1]} // Un poil au-dessus du cadre pour éviter le clignotement
+          rotation={[-Math.PI / 2, 0, Math.PI / 2]} // Couché à plat sur la plaque
+        >
+          {/* TON CODE HTML / REACT CLASSIQUE ICI */}
+          <div className="w-[490px] h-[305px] bg-black border-2 border-cyan-900 rounded-lg pointer-events-none will-change-transform flex flex-col font-mono text-cyan-400">
+            
+            
+              {moduleActif >= 2 ? (
+              <StatChart title="CPU Performance" data={historyCPU} yDomain={[0, 100]} metrics={[{ key: 'temp', color: '#8884d8', label: 'Température (°C)' }, { key: 'load', color: '#ff4444', label: 'Charge (%)' }]} />
+              ) : (
+              <div className="text-cyan-900 animate-pulse">Standby...</div>
+            )}
+
+          </div>
+
+        </Html>
+
+        <Html
+          transform    // Applique la perspective 3D
+          distanceFactor={8} // Règle la taille du HTML par rapport à la 3D
+          position={[4.08,0, 6.1]} // Un poil au-dessus du cadre pour éviter le clignotement
+          rotation={[-Math.PI / 2, 0, Math.PI / 2]} // Couché à plat sur la plaque
+        >
+          {/* TON CODE HTML / REACT CLASSIQUE ICI */}
+          <div className="w-[490px] h-[305px] bg-black border-2 border-cyan-900 rounded-lg pointer-events-none will-change-transform flex flex-col font-mono text-cyan-400">
+            
+            
+            {moduleActif >= 2 ? (
+              <StatChart title="RAM Used" data={historyRAM} yDomain={[0, 16]} metrics={[{ key: 'ramUsed', color: '#00C49F', label: 'Utilisation' }]} />
+              ) : (
+              <div className="text-cyan-900 animate-pulse">Standby...</div>
+            )}
+
+          </div>
+
+        </Html>
+
+        <Html
+          transform    // Applique la perspective 3D
+          distanceFactor={8} // Règle la taille du HTML par rapport à la 3D
+          position={[-3.5,0, -6.1]} // Un poil au-dessus du cadre pour éviter le clignotement
+          rotation={[-Math.PI / 2, 0, Math.PI / 2]} // Couché à plat sur la plaque
+        >
+          {/* TON CODE HTML / REACT CLASSIQUE ICI */}
+          <div className="w-[490px] h-[298px] bg-black border-2 border-cyan-900 rounded-lg pointer-events-none will-change-transform flex flex-col font-mono text-cyan-400">
+            
+            
+            {moduleActif >= 2 ? (
+              <StatChart title="Stockage" data={historyStorage} yDomain={[0, 100]} metrics={[{ key: 'storageUsed', color: '#FFBB28', label: 'Go Utilisés' }]} />
+              ) : (
+              <div className="text-cyan-900 animate-pulse">Standby...</div>
+            )}
+
+          </div>
+
+        </Html>
+
+        <Html
+          transform    // Applique la perspective 3D
+          distanceFactor={8} // Règle la taille du HTML par rapport à la 3D
+          position={[-3.5,0, 6.1]} // Un poil au-dessus du cadre pour éviter le clignotement
+          rotation={[-Math.PI / 2, 0, Math.PI / 2]} // Couché à plat sur la plaque
+        >
+          {/* TON CODE HTML / REACT CLASSIQUE ICI */}
+          <div className="w-[490px] h-[298px] bg-black border-2 border-cyan-900 rounded-lg pointer-events-none will-change-transform flex flex-col font-mono text-cyan-400">
+            
+            {moduleActif >= 2 ? (
+              <StatChart title="Consommation Électrique" data={historyWatts} yDomain={[0, 'auto']} metrics={[{ key: 'watts', color: '#0088FE', label: 'Watts' }]} />
+              ) : (
+              <div className="text-cyan-900 animate-pulse">Standby...</div>
+            )}
+
+          </div>
+
+        </Html>
+      </group>
+
+
+          
+
+        </Canvas>
+
+
+          <div className="absolute top-5 right-10 flex flex-col items-center z-20">
+            {/* On n'affiche le bloc de navigation que si on n'est pas au premier module */}
+            {moduleActif > 0 && (
+              <button 
+                  onClick={allerAuPrecedent} 
+                  className="pointer-cursor"
+                >
+                  {moduleActif === 2 ? "Vers Commits" : "Vers Apps"}
+                </button>
+            )}
+          </div>
+
+          <div className="absolute bottom-5 right-10 flex flex-col items-center z-20">
+            {/* On n'affiche le bloc de navigation que si on n'est pas au premier module */}
+            {moduleActif < 2 && (
+              <button 
+                  onClick={allerAuSuivant} 
+                  className="pointer-cursor"
+                >
+                  {moduleActif === 2 ? "Vers Dashboard" : "Vers Commits"}
+                </button>
+            )}
+          </div>
+
+        
       </div>
-    </div>
-  );
+  )
+
+  // return (
+  //   <div className='min-h-screen bg-gray-400 w-screen p-8'>
+  //     <h1 className="text-2xl font-bold mb-8">Dashboard Serveur</h1>
+
+  //     {/* --- ZONE 3D OPTIMISÉE --- */}
+  //     <div className="w-full h-[400px] mb-8 bg-gray-800 rounded-xl overflow-hidden shadow-lg border border-gray-700">
+  //       {/* dpr={[1, 1.5]} bride la résolution pour sauver ton PC */}
+  //       <Canvas dpr={[1, 1.5]} camera={{ position: [0, 10, 6], fov: 45, rotation: [0.5, 0, 0] }}>
+  //         {/* Couleur de fond intégrée à l'UI */}
+  //         <color attach="background" args={['#1f2937']} />
+          
+  //         <ambientLight intensity={0.5} />
+  //         <directionalLight position={[10, 10, 5]} intensity={1} />
+  //         <Environment preset="city" />
+          
+  //         {/* Suspense empêche le crash pendant le chargement du fichier 3D */}
+  //         <Suspense fallback={null}>
+  //           <ModelePlaque />
+  //         </Suspense>
+          
+  //         <OrbitControls makeDefault minPolarAngle={0} maxPolarAngle={Math.PI / 2} />
+  //       </Canvas>
+  //     </div>
+  //     {/* ------------------------ */}
+
+  //     <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+        
+        
+        
+        
+  //     </div>
+
+  //     <div className='flex flex-col gap-4 border-1 border-black w-max p-4 rounded-xl mt-5'>
+  //       {etatServices.map((service, key) => {
+  //         const repoData = service.githubRepo ? (githubStatus && githubStatus[service.githubRepo]) || { status: 'idle', conclusion: null, message: 'En attente...' } : null;
+
+  //         return (
+  //           <div key={key} className='flex flex-row gap-4 items-center p-2'>
+  //             <div className={`rounded-xl h-5 w-5 ${service.status === "online" ? 'bg-green-300' : 'bg-red-300'}`}></div>
+  //             <span className="font-semibold text-lg min-w-[120px]">{service.name}</span>
+
+  //             {repoData && (
+  //               <div className="flex items-center gap-3 bg-gray-800 px-3 py-1 rounded-lg border border-gray-700">
+  //                 {(repoData.status === 'in_progress' || repoData.status === 'queued') ? (
+  //                   <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+  //                 ) : repoData.conclusion === 'success' ? (
+  //                   <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center text-white text-xs font-bold">✓</div>
+  //                 ) : repoData.conclusion === 'failure' ? (
+  //                   <div className="w-5 h-5 rounded-full bg-red-500 flex items-center justify-center text-white text-xs font-bold">✗</div>
+  //                 ) : (
+  //                   <div className="w-5 h-5 rounded-full bg-gray-600 flex items-center justify-center text-white text-xs font-bold">-</div>
+  //                 )}
+
+  //                 <div className="flex flex-col">
+  //                   <span className="text-sm font-medium text-gray-200 line-clamp-1 max-w-[200px]">{repoData.message}</span>
+  //                   <span className="text-[10px] text-gray-400">
+  //                     {repoData.status === 'in_progress' ? 'Construction...' : repoData.conclusion === 'success' ? 'En ligne' : repoData.conclusion === 'failure' ? 'Échec' : 'En attente'}
+  //                   </span>
+  //                 </div>
+  //               </div>
+  //             )}
+  //           </div>
+  //         );
+  //       })}
+  //     </div>
+  //   </div>
+  // );
 }
 
 export default App;

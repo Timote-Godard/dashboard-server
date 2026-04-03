@@ -59,6 +59,78 @@ const MES_PROJETS = [
   }
 ];
 
+interface GithubCommit {
+  projet: string;
+  message: string;
+  auteur: string;
+  date: string;
+  hash: string;
+  url: string;
+}
+
+// On précise maintenant le type au moment de la déclaration
+let cachedCommits: GithubCommit[] = [];
+
+// Fonction pour récupérer les commits de GitHub
+async function fetchLatestCommits() {
+  const username = process.env.GITHUB_USERNAME;
+  const token = process.env.GITHUB_TOKEN;
+  
+  if (!username || !token) {
+    console.log("⚠️ GITHUB_TOKEN ou GITHUB_USERNAME manquant pour les commits.");
+    return;
+  }
+
+  try {
+    let tousLesCommits = [];
+
+    // On boucle sur tes projets qui ont un repo GitHub
+    const reposA_Scraper = MES_PROJETS.filter(p => p.githubRepo);
+
+    for (const projet of reposA_Scraper) {
+      const url = `https://api.github.com/repos/${username}/${projet.githubRepo}/commits?per_page=5`;
+      
+      const res = await fetch(url, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/vnd.github.v3+json',
+          'User-Agent': 'Dashboard-Timote' // GitHub exige un User-Agent
+        }
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        // On formate les données pour ne garder que l'essentiel et alléger la requête
+        const commitsFormates = data.map(c => ({
+          projet: projet.nom,
+          message: c.commit.message.split('\n')[0], // On garde que la 1ère ligne du message
+          auteur: c.commit.author.name,
+          date: c.commit.author.date,
+          hash: c.sha.substring(0, 7),
+          url: c.html_url
+        }));
+        
+        tousLesCommits.push(...commitsFormates);
+      }
+    }
+
+    // On trie TOUS les commits du plus récent au plus ancien
+    tousLesCommits.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+    // On ne garde que les 20 plus récents
+    cachedCommits = tousLesCommits.slice(0, 20);
+    console.log('🐙 Cache des commits mis à jour !');
+
+  } catch (error) {
+    console.error("Erreur lors de la récupération des commits:", error);
+  }
+}
+
+// On met à jour le cache toutes les 15 minutes (pour ne pas spammer GitHub)
+setInterval(fetchLatestCommits, 15 * 60 * 1000);
+// On lance une première récupération au démarrage du serveur
+fetchLatestCommits();
+
 app.use('/api/*', cors())
 
 app.get('/api/stats', async (c) => {
@@ -179,9 +251,7 @@ let githubState: Record<string, any> = {};
 
 // 2. On la remplit automatiquement au démarrage du serveur
 MES_PROJETS.forEach(projet => {
-  // On ne crée une case mémoire QUE si le projet a un repo GitHub
   if (projet.githubRepo) {
-    // ⚠️ On force le nom en minuscules pour éviter le fameux bug de tout à l'heure !
     const repoName = projet.githubRepo.toLowerCase();
     
     githubState[repoName] = { 
@@ -223,6 +293,10 @@ app.post('/api/github-webhook', async (c) => {
 // 3. La route toute légère pour ton React
 app.get('/api/github-status', (c) => {
   return c.json(githubState);
+});
+
+app.get('/api/commits', (c) => {
+  return c.json(cachedCommits);
 });
 
 app.get('/api/services', async (c) => {

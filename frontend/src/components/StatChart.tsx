@@ -1,6 +1,7 @@
 import { 
   AreaChart, Area, XAxis, YAxis, 
-  Tooltip, ResponsiveContainer 
+  Tooltip 
+  // On ne charge plus ResponsiveContainer !
 } from 'recharts';
 
 interface MetricConfig {
@@ -14,66 +15,54 @@ interface StatChartProps {
   data: any[];
   metrics: MetricConfig[];
   yDomain?: [number, number | 'auto']; 
+  // On ajoute les dimensions en props
+  width?: number;
+  height?: number;
 }
 
-const StatChart = ({ title, data, metrics, yDomain = [0, 'auto'] }: StatChartProps) => {
+const StatChart = ({ 
+  title, 
+  data, 
+  metrics, 
+  yDomain = [0, 'auto'],
+  width = 450, // Taille par défaut (un peu plus petit que ton écran de 490)
+  height = 250
+}: StatChartProps) => {
   return (
-    <div className='p-5 rounded-xl border border-gray-800 transition-all hover:scale-102 hover:shadow-md hover:shadow-gray-300'>
-      <div className='flex'>
-        <h3 className="text-sm uppercase tracking-wider text-gray-400 mb-4 font-bold">{title}</h3>
-      </div>
-      <div className='w-full h-64'>
-        <ResponsiveContainer>
-          <AreaChart data={data}>
-            <defs>
-              {/* On génère un dégradé par métrique */}
-              {metrics.map((m) => (
-                <linearGradient key={`grad-${m.key}`} id={`color${m.key}`} x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor={m.color} stopOpacity={0.8}/>
-                  <stop offset="95%" stopColor={m.color} stopOpacity={0}/>
-                </linearGradient>
-              ))}
-            </defs>
-
-            <XAxis 
-              dataKey="time" 
-              stroke="#444" 
-              fontSize={10} 
-              tickMargin={10}
-              axisLine={false}
-              tickLine={false}
-            />
-
-            <YAxis 
-              stroke="#444" 
-              fontSize={10} 
-              axisLine={false}
-              tickLine={false}
-              domain={yDomain} 
-              tickFormatter={(value) => `${value}`} 
-            />
-
-            <Tooltip 
-              contentStyle={{border: '1px solid #333', borderRadius: '8px' }}
-              itemStyle={{ fontSize: '12px' }}
-            />
-
+      <div className='w-full h-full flex flex-col items-center justify-center'>
+        {/* On donne la taille directement au graphique */}
+        <AreaChart width={width} height={height} data={data}>
+          
+          <defs>
             {metrics.map((m) => (
-              <Area
-                key={m.key}
-                type="monotone"
-                dataKey={m.key}
-                name={m.label}
-                stroke={m.color}
-                strokeWidth={2}
-                fill={`url(#color${m.key})`} // On appelle l'ID du gradient défini plus haut
-                isAnimationActive={false}
-              />
+              <linearGradient key={`grad-${m.key}`} id={`color${m.key}`} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor={m.color} stopOpacity={0.8}/>
+                <stop offset="95%" stopColor={m.color} stopOpacity={0}/>
+              </linearGradient>
             ))}
-          </AreaChart>
-        </ResponsiveContainer>
+          </defs>
+
+          {/* Astuce Opti : Désactiver l'animation du Tooltip */}
+          <Tooltip 
+            contentStyle={{ border: '1px solid #333', borderRadius: '8px' }}
+            itemStyle={{ fontSize: '12px' }}
+            isAnimationActive={false} 
+          />
+
+          {metrics.map((m) => (
+            <Area
+              key={m.key}
+              type="monotone"
+              dataKey={m.key}
+              name={m.label}
+              stroke={m.color}
+              strokeWidth={2}
+              fill={`url(#color${m.key})`} 
+              isAnimationActive={false} // C'est parfait ici !
+            />
+          ))}
+        </AreaChart>
       </div>
-    </div>
   );
 };
 
