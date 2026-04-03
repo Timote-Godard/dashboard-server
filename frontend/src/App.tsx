@@ -22,7 +22,7 @@ interface GithubCommit {
 }
 
 
-function CameraController({ vueActive }) {
+function CameraController({ vueActive }: { vueActive: number }) {
   useFrame((state) => {
     const vueCible = VUES_CAMERA[vueActive];
 
