@@ -105,7 +105,7 @@ function BoutonInteractif({ node, bouton }: BoutonInteractifProps) {
       position={node.position}
       // LES ÉVÉNEMENTS SOURIS
       onPointerOver={(e) => { e.stopPropagation(); setHover(true); }}
-      onPointerOut={(e) => { setHover(false); setPressed(false); }} // Si on sort, le bouton remonte
+      onPointerOut={() => { setHover(false); setPressed(false); }} // Si on sort, le bouton remonte
       onPointerDown={(e) => { e.stopPropagation(); setPressed(true); }} // On enfonce le clic
       onPointerUp={(e) => { e.stopPropagation(); setPressed(false); }} // On relâche le clic
       onClick={(e) => {
@@ -340,17 +340,38 @@ function App() {
               <span className="text-xs">v1.0.4</span>
             </div>
 
-            <div className="flex-1 overflow-y-auto space-y-3 custom-scrollbar">
-              {/* Exemple de liste de commits (à remplacer par tes data GitHub) */}
-              {commits.map((c, i) => (
-                <div key={i} className="border-l-2 border-cyan-500 pl-4 py-1 mb-2">
-                  <div className="text-xs font-bold text-white leading-tight">{c.message}</div>
-                  <div className="text-[9px] opacity-70 flex justify-between uppercase">
-                    <span>{c.projet} • {new Date(c.date).toLocaleDateString()}</span>
-                    <span className="text-cyan-600">#{c.hash}</span>
+             <div className='flex flex-col gap-4 border-1 border-black w-max p-4 rounded-xl mt-5'>
+              {etatServices.map((service, key) => {
+                const repoData = service.githubRepo ? (githubStatus && githubStatus[service.githubRepo]) || { status: 'idle', conclusion: null, message: 'En attente...' } : null;
+
+                return (
+                  <div key={key} className='flex flex-row gap-4 items-center p-2'>
+                    <div className={`rounded-xl h-5 w-5 ${service.status === "online" ? 'bg-green-300' : 'bg-red-300'}`}></div>
+                    <span className="font-semibold text-lg min-w-[120px]">{service.name}</span>
+
+                    {repoData && (
+                      <div className="flex items-center gap-3 bg-gray-800 px-3 py-1 rounded-lg border border-gray-700">
+                        {(repoData.status === 'in_progress' || repoData.status === 'queued') ? (
+                          <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                        ) : repoData.conclusion === 'success' ? (
+                          <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center text-white text-xs font-bold">✓</div>
+                        ) : repoData.conclusion === 'failure' ? (
+                          <div className="w-5 h-5 rounded-full bg-red-500 flex items-center justify-center text-white text-xs font-bold">✗</div>
+                        ) : (
+                          <div className="w-5 h-5 rounded-full bg-gray-600 flex items-center justify-center text-white text-xs font-bold">-</div>
+                        )}
+
+                        <div className="flex flex-col">
+                          <span className="text-sm font-medium text-gray-200 line-clamp-1 max-w-[200px]">{repoData.message}</span>
+                          <span className="text-[10px] text-gray-400">
+                            {repoData.status === 'in_progress' ? 'Construction...' : repoData.conclusion === 'success' ? 'En ligne' : repoData.conclusion === 'failure' ? 'Échec' : 'En attente'}
+                          </span>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
           </div>
@@ -370,13 +391,17 @@ function App() {
               <span className="text-xs uppercase tracking-widest">System Monitor // Git Log</span>
               <span className="text-xs">v1.0.4</span>
             </div>
+            
 
             <div className="flex-1 overflow-y-auto space-y-3 custom-scrollbar">
               {/* Exemple de liste de commits (à remplacer par tes data GitHub) */}
-              {[1, 2, 3, 4, 5].map((i) => (
-                <div key={i} className="border-l-2 border-cyan-500 pl-4 py-1 hover:bg-cyan-950 transition-colors">
-                  <div className="text-sm font-bold text-white">feat: update dashboard 3D positioning</div>
-                  <div className="text-[10px] opacity-60">2 hours ago by Timoté • hash: 7f3a21b</div>
+              {commits.map((c, i) => (
+                <div key={i} className="border-l-2 border-cyan-500 pl-4 py-1 mb-2">
+                  <div className="text-xs font-bold text-white leading-tight">{c.message}</div>
+                  <div className="text-[9px] opacity-70 flex justify-between uppercase">
+                    <span>{c.projet} • {new Date(c.date).toLocaleDateString()}</span>
+                    <span className="text-cyan-600">#{c.hash}</span>
+                  </div>
                 </div>
               ))}
             </div>
@@ -536,39 +561,7 @@ function App() {
         
   //     </div>
 
-  //     <div className='flex flex-col gap-4 border-1 border-black w-max p-4 rounded-xl mt-5'>
-  //       {etatServices.map((service, key) => {
-  //         const repoData = service.githubRepo ? (githubStatus && githubStatus[service.githubRepo]) || { status: 'idle', conclusion: null, message: 'En attente...' } : null;
-
-  //         return (
-  //           <div key={key} className='flex flex-row gap-4 items-center p-2'>
-  //             <div className={`rounded-xl h-5 w-5 ${service.status === "online" ? 'bg-green-300' : 'bg-red-300'}`}></div>
-  //             <span className="font-semibold text-lg min-w-[120px]">{service.name}</span>
-
-  //             {repoData && (
-  //               <div className="flex items-center gap-3 bg-gray-800 px-3 py-1 rounded-lg border border-gray-700">
-  //                 {(repoData.status === 'in_progress' || repoData.status === 'queued') ? (
-  //                   <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-  //                 ) : repoData.conclusion === 'success' ? (
-  //                   <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center text-white text-xs font-bold">✓</div>
-  //                 ) : repoData.conclusion === 'failure' ? (
-  //                   <div className="w-5 h-5 rounded-full bg-red-500 flex items-center justify-center text-white text-xs font-bold">✗</div>
-  //                 ) : (
-  //                   <div className="w-5 h-5 rounded-full bg-gray-600 flex items-center justify-center text-white text-xs font-bold">-</div>
-  //                 )}
-
-  //                 <div className="flex flex-col">
-  //                   <span className="text-sm font-medium text-gray-200 line-clamp-1 max-w-[200px]">{repoData.message}</span>
-  //                   <span className="text-[10px] text-gray-400">
-  //                     {repoData.status === 'in_progress' ? 'Construction...' : repoData.conclusion === 'success' ? 'En ligne' : repoData.conclusion === 'failure' ? 'Échec' : 'En attente'}
-  //                   </span>
-  //                 </div>
-  //               </div>
-  //             )}
-  //           </div>
-  //         );
-  //       })}
-  //     </div>
+  //    
   //   </div>
   // );
 }
