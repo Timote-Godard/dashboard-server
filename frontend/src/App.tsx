@@ -1,9 +1,9 @@
-import React, { useEffect, useState, useMemo, Suspense, useRef } from 'react';
+import { useEffect, useState, useMemo, Suspense, useRef } from 'react';
 import StatChart from "./components/StatChart";
 
 // Imports pour la 3D
 import { Canvas, useFrame } from '@react-three/fiber';
-import { useGLTF, OrbitControls, Environment, Text, useCursor, Html, PerformanceMonitor } from '@react-three/drei';
+import { useGLTF, Environment, Text, useCursor, Html, PerformanceMonitor } from '@react-three/drei';
 import * as THREE from 'three';
 
 const VUES_CAMERA = [
@@ -41,7 +41,7 @@ function CameraController({ vueActive }: { vueActive: number }) {
 }
 
 // --- COMPOSANT 3D OPTIMISÉ ---
-function ModelePlaque({ service }: { service: any }) {
+function ModelePlaque() {
   const { nodes } = useGLTF('/plaque.glb') as any;
 
   const materialPlaque = useMemo(() => new THREE.MeshStandardMaterial({

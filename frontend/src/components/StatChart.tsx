@@ -2,7 +2,6 @@ import {
   AreaChart, Area, 
   Tooltip,
   YAxis, // On rajoute l'import de l'axe Y
-  XAxis  // Optionnel, mais utile pour l'alignement
 } from 'recharts';
 
 interface MetricConfig {
