@@ -101,9 +101,9 @@ async function fetchLatestCommits() {
       if (res.ok) {
         const data = await res.json();
         // On formate les données pour ne garder que l'essentiel et alléger la requête
-        const commitsFormates = data.map(c => ({
+        const commitsFormates = data.map((c: any) => ({
           projet: projet.nom,
-          message: c.commit.message.split('\n')[0], // On garde que la 1ère ligne du message
+          message: c.commit.message.split('\n')[0], //   On garde que la 1ère ligne du message
           auteur: c.commit.author.name,
           date: c.commit.author.date,
           hash: c.sha.substring(0, 7),
