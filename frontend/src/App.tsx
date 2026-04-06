@@ -54,10 +54,10 @@ function ModelePlaque() {
     { nom: 'bouton2', texte: 'CHAMBRE', couleurTexte: '#ff4444', couleurBouton: '#550000', url: 'https://chambre.timote.ovh' },
     { nom: 'bouton3', texte: 'CLOUD', couleurTexte: '#ffbb00', couleurBouton: '#553300', url: 'https://cloud.timote.ovh' },
     { nom: 'bouton4', texte: 'DASHBOARD', couleurTexte: '#00ff00', couleurBouton: '#004400', url: 'https://notes.timote.ovh' },
-    { nom: 'bouton5', texte: 'API', couleurTexte: '#aa00ff', couleurBouton: '#220044', url: 'https://dashboard.timote.ovh' },
-    { nom: 'bouton6', texte: 'MAIL', couleurTexte: '#ffffff', couleurBouton: '#444444', url: 'https://quiz.timote.ovh' },
-    { nom: 'bouton7', texte: 'DB', couleurTexte: '#0088ff', couleurBouton: '#002255', url: 'https://timote-godard.github.io' },
-    { nom: 'bouton8', texte: 'SERVEUR', couleurTexte: '#ff00aa', couleurBouton: '#550033', url: 'https://ovh.com' }
+    { nom: 'bouton5', texte: 'RIEN', couleurTexte: '#aa00ff', couleurBouton: '#220044', url: 'https://dashboard.timote.ovh' },
+    { nom: 'bouton6', texte: 'QUIZ', couleurTexte: '#ffffff', couleurBouton: '#444444', url: 'https://quiz.timote.ovh' },
+    { nom: 'bouton7', texte: 'PORTFOLIO', couleurTexte: '#0088ff', couleurBouton: '#002255', url: 'https://timote-godard.github.io' },
+    { nom: 'bouton8', texte: 'RIEN', couleurTexte: '#ff00aa', couleurBouton: '#550033', url: 'https://dashboard.timote.ovh' }
   ];
 
     return (

@@ -258,7 +258,7 @@ let githubState: Record<string, any> = {};
 
 // 2. On la remplit automatiquement au démarrage du serveur
 MES_PROJETS.forEach(projet => {
-  if (projet.githubRepo && projet.id != "dashboard") {
+  if (projet.githubRepo && projet.id != "dashboard") { // On ignore le dashboard lui-même, pas besoin de se surveiller
     const repoName = projet.githubRepo.toLowerCase();
     
     githubState[repoName] = { 
