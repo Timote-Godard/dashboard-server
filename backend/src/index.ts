@@ -323,8 +323,8 @@ app.get('/api/services', async (c) => {
         name: projet.nom,
         url: projet.url,
         status: status,
-        // On sécurise en mettant le repo en minuscules (comme on a vu tout à l'heure !)
-        githubRepo: projet.githubRepo ? projet.githubRepo.toLowerCase() : null 
+        // On envoie 'null' au front si c'est le dashboard, pour bloquer l'affichage de la pastille !
+        githubRepo: (projet.githubRepo && projet.id !== 'dashboard') ? projet.githubRepo.toLowerCase() : null 
       };
     });
 
