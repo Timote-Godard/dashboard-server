@@ -199,7 +199,7 @@ function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [githubStatus, setGithubStatus] = useState<any>(null);
   const [moduleActif, setModuleActif] = useState(0);
-  const [dpr, setDpr] = useState(1.5);
+  const [dpr, setDpr] = useState(1);
   const [commits, setCommits] = useState<GithubCommit[]>([]);
 
   const allerAuSuivant = () => setModuleActif((prev) => Math.min(prev + 1, 2));
@@ -306,7 +306,7 @@ function App() {
         <Canvas dpr={dpr} camera={{ position: [5.30, 17.67, -0.12], rotation: [-1.57, 0.29, 1.56], fov: 45 }}>
 
           <PerformanceMonitor 
-            onDecline={() => setDpr(0.5)} // Mode "Sauvetage" pour vieux PC
+            onDecline={() => setDpr(0.8)} // Mode "Sauvetage" pour vieux PC
             onIncline={() => setDpr(1)} // Mode "HD" pour PC Gamer
           />
           {/* Couleur de fond intégrée à l'UI */}
@@ -502,26 +502,26 @@ function App() {
         </Canvas>
 
 
-          <div className="absolute top-5 right-10 flex flex-col items-center z-20">
+          <div className="absolute top-5 right-10 flex flex-col items-center z-[999]">
             {/* On n'affiche le bloc de navigation que si on n'est pas au premier module */}
             {moduleActif > 0 && (
               <button 
                   onClick={allerAuPrecedent} 
-                  className="pointer-cursor"
+                  className="pointer-events-auto text-2xl cursor-pointer hover:bg-white/20 border border-white/10 hover:border-white/20 text-white/20 hover:text-white p-4 rounded-sm transition"
                 >
                   {moduleActif === 2 ? "Vers Commits" : "Vers Apps"}
                 </button>
             )}
           </div>
 
-          <div className="absolute bottom-5 right-10 flex flex-col items-center z-20">
+          <div className="absolute bottom-5 right-10 flex flex-col items-center z-[999]">
             {/* On n'affiche le bloc de navigation que si on n'est pas au premier module */}
             {moduleActif < 2 && (
               <button 
                   onClick={allerAuSuivant} 
-                  className="pointer-cursor"
+                  className="pointer-events-auto text-2xl cursor-pointer hover:bg-white/20 border border-white/10 hover:border-white/20 text-white/20 hover:text-white p-4 rounded-sm transition"
                 >
-                  {moduleActif === 2 ? "Vers Dashboard" : "Vers Commits"}
+                  {moduleActif === 1 ? "Vers Dashboard" : "Vers Commits"}
                 </button>
             )}
           </div>
@@ -529,42 +529,6 @@ function App() {
         
       </div>
   )
-
-  // return (
-  //   <div className='min-h-screen bg-gray-400 w-screen p-8'>
-  //     <h1 className="text-2xl font-bold mb-8">Dashboard Serveur</h1>
-
-  //     {/* --- ZONE 3D OPTIMISÉE --- */}
-  //     <div className="w-full h-[400px] mb-8 bg-gray-800 rounded-xl overflow-hidden shadow-lg border border-gray-700">
-  //       {/* dpr={[1, 1.5]} bride la résolution pour sauver ton PC */}
-  //       <Canvas dpr={[1, 1.5]} camera={{ position: [0, 10, 6], fov: 45, rotation: [0.5, 0, 0] }}>
-  //         {/* Couleur de fond intégrée à l'UI */}
-  //         <color attach="background" args={['#1f2937']} />
-          
-  //         <ambientLight intensity={0.5} />
-  //         <directionalLight position={[10, 10, 5]} intensity={1} />
-  //         <Environment preset="city" />
-          
-  //         {/* Suspense empêche le crash pendant le chargement du fichier 3D */}
-  //         <Suspense fallback={null}>
-  //           <ModelePlaque />
-  //         </Suspense>
-          
-  //         <OrbitControls makeDefault minPolarAngle={0} maxPolarAngle={Math.PI / 2} />
-  //       </Canvas>
-  //     </div>
-  //     {/* ------------------------ */}
-
-  //     <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
-        
-        
-        
-        
-  //     </div>
-
-  //    
-  //   </div>
-  // );
 }
 
 export default App;

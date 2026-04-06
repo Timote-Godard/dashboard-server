@@ -94,6 +94,7 @@ async function fetchLatestCommits() {
     const reposA_Scraper = MES_PROJETS.filter(p => p.githubRepo);
 
     for (const projet of reposA_Scraper) {
+      console.log(`📡 Tentative de récup pour : ${projet.githubRepo}`); // <--- AJOUTE ÇA
       const url = `https://api.github.com/repos/${username}/${projet.githubRepo}/commits?per_page=5`;
       
       const res = await fetch(url, {
