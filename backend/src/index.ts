@@ -308,7 +308,10 @@ app.get('/api/commits', (c) => {
 
 app.get('/api/services', async (c) => {
   try {
-    const checkPromises = MES_PROJETS.map(async (projet) => {
+    const projetsAAfficher = MES_PROJETS.filter(p => p.id !== 'dashboard');
+
+    // 👇 2. On boucle uniquement sur les projets filtrés
+    const checkPromises = projetsAAfficher.map(async (projet) => {
       let status = 'offline';
       try {
         const res = await fetch(projet.url, { method: 'HEAD', signal: AbortSignal.timeout(5000) });
@@ -317,14 +320,12 @@ app.get('/api/services', async (c) => {
         status = 'offline';
       }
 
-      // 👇 ON RENVOIE TOUTES LES INFOS DU PROJET ICI 👇
       return {
         id: projet.id,
         name: projet.nom,
         url: projet.url,
         status: status,
-        // On envoie 'null' au front si c'est le dashboard, pour bloquer l'affichage de la pastille !
-        githubRepo: (projet.githubRepo && projet.id !== 'dashboard') ? projet.githubRepo.toLowerCase() : null 
+        githubRepo: projet.githubRepo ? projet.githubRepo.toLowerCase() : null 
       };
     });
 
