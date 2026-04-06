@@ -12,6 +12,8 @@ jobs:
           echo "MEROSS_IP=${{ secrets.MEROSS_IP }}" > .env
           echo "MEROSS_UUID=${{ secrets.MEROSS_UUID }}" >> .env
           echo "MEROSS_KEY=${{ secrets.MEROSS_KEY }}" >> .env
+          echo "GITHUB_USERNAME=${{ secrets.COMMIT_USERNAME }}" >> .env
+          echo "GITHUB_TOKEN=${{ secrets.COMMIT_TOKEN }}" >> .env
 
       - name: 🐳 Docker Compose Deploy
         run: |

@@ -50,13 +50,13 @@ function ModelePlaque() {
 
   // 3. LA CONFIGURATION : Tes 8 boutons avec leurs textes et couleurs "Néon"
   const configurationBoutons = [
-    { nom: 'bouton1', texte: 'PORTFOLIO', couleurTexte: '#00ffff', couleurBouton: '#004444', url: 'https://ton-portfolio.com' },
-    { nom: 'bouton2', texte: 'ANALYTICS', couleurTexte: '#ff4444', couleurBouton: '#550000', url: 'https://analytics.google.com' },
-    { nom: 'bouton3', texte: 'PROJET 1', couleurTexte: '#ffbb00', couleurBouton: '#553300', url: 'https://projet1.com' },
-    { nom: 'bouton4', texte: 'GITHUB', couleurTexte: '#00ff00', couleurBouton: '#004400', url: 'https://github.com/ton-profil' },
-    { nom: 'bouton5', texte: 'API', couleurTexte: '#aa00ff', couleurBouton: '#220044', url: 'https://api.ton-site.com' },
-    { nom: 'bouton6', texte: 'MAIL', couleurTexte: '#ffffff', couleurBouton: '#444444', url: 'https://mail.google.com' },
-    { nom: 'bouton7', texte: 'DB', couleurTexte: '#0088ff', couleurBouton: '#002255', url: 'https://supabase.com' },
+    { nom: 'bouton1', texte: 'AGENDA', couleurTexte: '#00ffff', couleurBouton: '#004444', url: 'https://ent-timote.ovh' },
+    { nom: 'bouton2', texte: 'CHAMBRE', couleurTexte: '#ff4444', couleurBouton: '#550000', url: 'https://chambre.timote.ovh' },
+    { nom: 'bouton3', texte: 'CLOUD', couleurTexte: '#ffbb00', couleurBouton: '#553300', url: 'https://cloud.timote.ovh' },
+    { nom: 'bouton4', texte: 'DASHBOARD', couleurTexte: '#00ff00', couleurBouton: '#004400', url: 'https://notes.timote.ovh' },
+    { nom: 'bouton5', texte: 'API', couleurTexte: '#aa00ff', couleurBouton: '#220044', url: 'https://dashboard.timote.ovh' },
+    { nom: 'bouton6', texte: 'MAIL', couleurTexte: '#ffffff', couleurBouton: '#444444', url: 'https://quiz.timote.ovh' },
+    { nom: 'bouton7', texte: 'DB', couleurTexte: '#0088ff', couleurBouton: '#002255', url: 'https://timote-godard.github.io' },
     { nom: 'bouton8', texte: 'SERVEUR', couleurTexte: '#ff00aa', couleurBouton: '#550033', url: 'https://ovh.com' }
   ];
 
@@ -240,6 +240,7 @@ function App() {
       const resCommits = await fetch('https://api-dashboard.timote.ovh/api/commits');
       const dataCommits = await resCommits.json();
       setCommits(dataCommits);
+      console.log("Commits chargés :", dataCommits);
     } catch (err) {
       console.error("Erreur API GitHub Status :", err);
     }
