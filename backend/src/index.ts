@@ -56,6 +56,12 @@ const MES_PROJETS = [
     nom: 'Quiz entre Potes', 
     url: 'https://quiz.timote.ovh',
     githubRepo: 'Culture-de-geek'
+  },
+  { 
+    id: 'dashboard',
+    nom: 'Dashboard', 
+    url: 'https://dashboard.timote.ovh',
+    githubRepo: 'dashboard-server'
   }
 ];
 
@@ -251,7 +257,7 @@ let githubState: Record<string, any> = {};
 
 // 2. On la remplit automatiquement au démarrage du serveur
 MES_PROJETS.forEach(projet => {
-  if (projet.githubRepo) {
+  if (projet.githubRepo && projet.id != "dashboard") {
     const repoName = projet.githubRepo.toLowerCase();
     
     githubState[repoName] = { 
